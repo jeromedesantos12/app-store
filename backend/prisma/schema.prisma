@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  completed
+  cancelled
+}
+
+enum UserRole {
+  admin
+  customer
+}
+
+// ─── USER ────────────────────────────────────────────────
+model User {
+  id          String      @id @default(uuid())
+  profile     String?     @db.VarChar(255)
+  username    String      @unique @db.VarChar(50)
+  name        String      @db.VarChar(100)
+  email       String      @unique @db.VarChar(255)
+  password    String      @db.VarChar(255)
+  role        UserRole    @default(customer)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?   // soft delete
+
+  carts   Cart[]
+  orders  Order[]
+}
+
+// ─── SUPPLIER ─────────────────────────────────────────────
+model Supplier {
+  id          String      @id @default(uuid())
+  name        String      @db.VarChar(100)
+  phone       String?     @db.VarChar(20)
+  email       String?     @db.VarChar(255)
+  address     String?     @db.VarChar(255)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?   // soft delete
+
+  products    Product[]
+}
+
+// ─── PRODUCT ──────────────────────────────────────────────
+model Product {
+  id          String      @id @default(uuid())
+  supplierId  String
+  image       String?     @db.VarChar(255)
+  name        String      @db.VarChar(100)
+  category    String      @db.VarChar(100)
+  description String?     @db.VarChar(255)
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?   // soft delete
+
+  supplier    Supplier?   @relation(fields: [supplierId], references: [id])
+  carts       Cart[]
+  orders      Order[]
+}
+
+// ─── CART ────────────────────────────────────────────────
+model Cart {
+  id          String      @id @default(uuid())
+  userId      String
+  productId   String
+  qty         Int         @default(1)
+  total       Decimal     @db.Decimal(10, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId]) // biar 1 user gak punya item duplikat di cart
+}
+
+// ─── ORDER ────────────────────────────────────────────────
+model Order {
+  id          String       @id @default(uuid())
+  userId      String
+  productId   String
+  qty         Int          @default(0)
+  total       Decimal      @db.Decimal(10, 2)
+  status      OrderStatus  @default(pending)
+  address     String?      @db.VarChar(255)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
