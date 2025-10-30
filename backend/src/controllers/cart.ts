@@ -9,7 +9,7 @@ export async function readCarts(
 ) {
   try {
     const { id: userId } = (req as any).user;
-    const cartItems = await prisma.cart.findMany({
+    const carts = await prisma.cart.findMany({
       where: { userId },
       include: {
         product: {
@@ -21,15 +21,15 @@ export async function readCarts(
       },
     });
     res.status(200).json({
-      status: "success",
+      status: "Success",
       message: "Fetch cart success!",
-      data: cartItems,
+      data: carts,
     });
   } catch (err) {
     next(err);
   }
 }
-export async function createCart(
+export async function upsertCart(
   req: Request,
   res: Response,
   next: NextFunction
@@ -38,12 +38,8 @@ export async function createCart(
     const { id: userId } = (req as any).user;
     const { productId, qty } = req.body;
     const [user, product] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId, deletedAt: null },
-      }),
-      prisma.product.findUnique({
-        where: { id: productId, deletedAt: null },
-      }),
+      prisma.user.findFirst({ where: { id: userId, deletedAt: null } }),
+      prisma.product.findFirst({ where: { id: productId, deletedAt: null } }),
     ]);
     if (user === null) {
       throw appError("User not Found", 404);
@@ -51,60 +47,40 @@ export async function createCart(
     if (product === null) {
       throw appError("Product not Found", 404);
     }
-    const total = Number(product.price) * qty;
-    const createdCart = await prisma.cart.create({
-      data: {
-        userId,
-        productId,
-        qty,
-        total,
-      },
+    const existingCart = await prisma.cart.findFirst({
+      where: { userId, productId },
     });
-    res.status(201).json({
-      status: "Success",
-      message: `Create cart [${createdCart.id}] success!`,
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function updateCart(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const { id } = req.params;
-    const { qty } = req.body;
-    const oldCart = await prisma.cart.findUnique({
-      where: { id },
-    });
-    if (oldCart === null) {
-      throw appError("Old cart not Found", 404);
+    let cart;
+    if (existingCart) {
+      const newQty = existingCart.qty + qty;
+      if (newQty <= 0) {
+        await prisma.cart.delete({ where: { id: existingCart.id } });
+        return res.status(200).json({
+          status: "Success",
+          message: `Cart [${existingCart.id}] removed (qty <= 0)`,
+        });
+      }
+      cart = await prisma.cart.update({
+        where: { id: existingCart.id },
+        data: {
+          qty: newQty,
+          total: Number(product.price) * newQty,
+        },
+      });
+    } else {
+      cart = await prisma.cart.create({
+        data: {
+          userId,
+          productId,
+          qty,
+          total: Number(product.price) * qty,
+        },
+      });
     }
-    const [user, product] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: oldCart.userId },
-      }),
-      prisma.product.findUnique({
-        where: { id: oldCart.productId },
-      }),
-    ]);
-    if (user === null) {
-      throw appError("User not Found", 404);
-    }
-    if (product === null) {
-      throw appError("Product not Found", 404);
-    }
-    const total = Number(product.price) * qty;
-    const updatedCart = await prisma.cart.update({
-      where: { id },
-      data: { qty, total },
-    });
     res.status(200).json({
       status: "Success",
-      message: `Update cart [${updatedCart.id}] success!`,
+      message: `Cart ${existingCart ? "updated" : "created"} successfully!`,
+      data: cart,
     });
   } catch (err) {
     next(err);
@@ -118,12 +94,13 @@ export async function deleteCart(
 ) {
   try {
     const { id } = req.params;
-    const deletedCart = await prisma.cart.delete({
+    const cart = await prisma.cart.delete({
       where: { id },
     });
     res.status(200).json({
       status: "Success",
-      message: `Delete order [${deletedCart.id}] success!`,
+      message: `Delete order [${cart.id}] success!`,
+      data: cart,
     });
   } catch (err) {
     next(err);

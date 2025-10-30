@@ -112,7 +112,7 @@ export async function createProduct(
     const { supplierId, name, category, description, price, stock } = req.body;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
-    const createdProduct = await prisma.product.create({
+    const product = await prisma.product.create({
       data: {
         supplierId,
         image: fileName,
@@ -127,7 +127,8 @@ export async function createProduct(
     writeFileSync(savePath, fileBuffer);
     res.status(201).json({
       status: "Success",
-      message: `Create product ${createdProduct.name} success!`,
+      message: `Create product ${product.name} success!`,
+      data: product,
     });
   } catch (err) {
     next(err);
@@ -145,7 +146,7 @@ export async function updateProduct(
     const existingProduct = (req as any).model;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
-    const updatedProduct = await prisma.product.update({
+    const product = await prisma.product.update({
       data: {
         supplierId: supplierId ? supplierId : existingProduct.supplierId,
         image: fileName ?? existingProduct.image,
@@ -180,7 +181,8 @@ export async function updateProduct(
     }
     res.status(200).json({
       status: "Success",
-      message: `Update product ${updatedProduct.name} success!`,
+      message: `Update product ${product.name} success!`,
+      data: product,
     });
   } catch (err) {
     next(err);
@@ -194,7 +196,7 @@ export async function restoreProduct(
 ) {
   try {
     const { id } = req.params;
-    const restoredProduct = await prisma.product.update({
+    const product = await prisma.product.update({
       data: {
         deletedAt: null,
       },
@@ -203,24 +205,20 @@ export async function restoreProduct(
         deletedAt: { not: null },
       },
     });
-    if (restoredProduct && restoredProduct.image) {
+    if (product && product.image) {
       const oldPath = resolve(
         "src",
         "uploads",
         "product",
-        "temp_" + restoredProduct.image
+        "temp_" + product.image
       );
-      const newPath = resolve(
-        "src",
-        "uploads",
-        "product",
-        restoredProduct.image
-      );
+      const newPath = resolve("src", "uploads", "product", product.image);
       renameSync(oldPath, newPath);
     }
     res.status(200).json({
       status: "Success",
-      message: `Restore product ${restoredProduct.name} success!`,
+      message: `Restore product ${product.name} success!`,
+      data: product,
     });
   } catch (err) {
     next(err);
@@ -234,7 +232,7 @@ export async function deleteProduct(
 ) {
   try {
     const { id } = req.params;
-    const deletedProduct = await prisma.product.update({
+    const product = await prisma.product.update({
       data: {
         deletedAt: new Date(),
       },
@@ -243,24 +241,20 @@ export async function deleteProduct(
         deletedAt: null,
       },
     });
-    if (deletedProduct && deletedProduct.image) {
-      const oldPath = resolve(
-        "src",
-        "uploads",
-        "product",
-        deletedProduct.image
-      );
+    if (product && product.image) {
+      const oldPath = resolve("src", "uploads", "product", product.image);
       const newPath = resolve(
         "src",
         "uploads",
         "product",
-        "temp_" + deletedProduct.image
+        "temp_" + product.image
       );
       renameSync(oldPath, newPath);
     }
     res.status(200).json({
       status: "Success",
-      message: `Delete product ${deletedProduct.name} success!`,
+      message: `Delete product ${product.name} success!`,
+      data: product,
     });
   } catch (err) {
     next(err);

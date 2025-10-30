@@ -1,6 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { writeFileSync, renameSync, unlink } from "fs";
-import { resolve } from "path";
 import { prisma } from "../connections/client";
 import { appError } from "../utils/error";
 
@@ -96,7 +94,7 @@ export async function createSupplier(
     if (existingSupplier && existingSupplier.email === email) {
       throw appError("Email already exists!", 409);
     }
-    const createdSupplier = await prisma.supplier.create({
+    const supplier = await prisma.supplier.create({
       data: {
         name,
         phone,
@@ -106,7 +104,8 @@ export async function createSupplier(
     });
     res.status(201).json({
       status: "Success",
-      message: `Create supplier ${createdSupplier.name} success!`,
+      message: `Create supplier ${supplier.name} success!`,
+      data: supplier,
     });
   } catch (err) {
     next(err);
@@ -122,7 +121,7 @@ export async function updateSupplier(
     const { id } = (req as any).user;
     const { name, phone, email, address } = req.body;
     const existingSupplier = (req as any).model;
-    const updatedSupplier = await prisma.supplier.update({
+    const supplier = await prisma.supplier.update({
       data: {
         name: name ? name : existingSupplier.name,
         phone: phone ? phone : existingSupplier.phone,
@@ -136,7 +135,8 @@ export async function updateSupplier(
     });
     res.status(200).json({
       status: "200 OK",
-      message: `Update supplier ${updatedSupplier.name} success!`,
+      message: `Update supplier ${supplier.name} success!`,
+      data: supplier,
     });
   } catch (err) {
     next(err);
@@ -150,7 +150,7 @@ export async function restoreSupplier(
 ) {
   try {
     const { id } = req.params;
-    const restoredSupplier = await prisma.supplier.update({
+    const supplier = await prisma.supplier.update({
       data: {
         deletedAt: null,
       },
@@ -161,7 +161,8 @@ export async function restoreSupplier(
     });
     res.status(200).json({
       status: "Success",
-      message: `Restore user ${restoredSupplier.name} success!`,
+      message: `Restore user ${supplier.name} success!`,
+      data: supplier,
     });
   } catch (err) {
     next(err);
@@ -175,7 +176,7 @@ export async function deleteSupplier(
 ) {
   try {
     const { id } = req.params;
-    const deletedSupplier = await prisma.supplier.update({
+    const supplier = await prisma.supplier.update({
       data: {
         deletedAt: new Date(),
       },
@@ -186,7 +187,8 @@ export async function deleteSupplier(
     });
     res.status(200).json({
       status: "Success",
-      message: `Delete supplier ${deletedSupplier.name} success!`,
+      message: `Delete supplier ${supplier.name} success!`,
+      data: supplier,
     });
   } catch (err) {
     next(err);

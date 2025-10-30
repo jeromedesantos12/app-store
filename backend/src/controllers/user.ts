@@ -196,7 +196,7 @@ export async function createUser(
     if (existingUser && existingUser.email === email) {
       throw appError("Email already exists!", 409);
     }
-    const createdUser = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         profile: fileName,
         username,
@@ -209,7 +209,7 @@ export async function createUser(
     writeFileSync(savePath, fileBuffer);
     res.status(201).json({
       status: "Success",
-      message: `Create user ${createdUser.name} success!`,
+      message: `Create user ${user.name} success!`,
     });
   } catch (err) {
     next(err);
@@ -228,7 +228,7 @@ export async function updateUser(
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
     const hashedPassword = await hashPassword(password);
-    const updatedUser = await prisma.user.update({
+    const user = await prisma.user.update({
       data: {
         profile: fileName ?? existingUser.profile,
         username: username ? username : existingUser.username,
@@ -262,7 +262,7 @@ export async function updateUser(
     }
     res.status(200).json({
       status: "200 OK",
-      message: `Update user ${updatedUser.name} success!`,
+      message: `Update user ${user.name} success!`,
     });
   } catch (err) {
     next(err);
@@ -276,7 +276,7 @@ export async function restoreUser(
 ) {
   try {
     const { id } = req.params;
-    const restoredUser = await prisma.user.update({
+    const user = await prisma.user.update({
       data: {
         deletedAt: null,
       },
@@ -285,19 +285,14 @@ export async function restoreUser(
         deletedAt: { not: null },
       },
     });
-    if (restoredUser && restoredUser.profile) {
-      const oldPath = resolve(
-        "src",
-        "uploads",
-        "user",
-        "temp_" + restoredUser.profile
-      );
-      const newPath = resolve("src", "uploads", "user", restoredUser.profile);
+    if (user && user.profile) {
+      const oldPath = resolve("src", "uploads", "user", "temp_" + user.profile);
+      const newPath = resolve("src", "uploads", "user", user.profile);
       renameSync(oldPath, newPath);
     }
     res.status(200).json({
       status: "Success",
-      message: `Restore user ${restoredUser.name} success!`,
+      message: `Restore user ${user.name} success!`,
     });
   } catch (err) {
     next(err);
@@ -311,7 +306,7 @@ export async function deleteUser(
 ) {
   try {
     const { id } = req.params;
-    const deletedUser = await prisma.user.update({
+    const user = await prisma.user.update({
       data: {
         deletedAt: new Date(),
       },
@@ -320,19 +315,14 @@ export async function deleteUser(
         deletedAt: null,
       },
     });
-    if (deletedUser && deletedUser.profile) {
-      const oldPath = resolve("src", "uploads", "user", deletedUser.profile);
-      const newPath = resolve(
-        "src",
-        "uploads",
-        "user",
-        "temp_" + deletedUser.profile
-      );
+    if (user && user.profile) {
+      const oldPath = resolve("src", "uploads", "user", user.profile);
+      const newPath = resolve("src", "uploads", "user", "temp_" + user.profile);
       renameSync(oldPath, newPath);
     }
     res.status(200).json({
       status: "Success",
-      message: `Delete user ${deletedUser.name} success!`,
+      message: `Delete user ${user.name} success!`,
     });
   } catch (err) {
     next(err);

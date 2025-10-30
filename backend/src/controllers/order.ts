@@ -27,7 +27,7 @@ export async function readOrders(
       },
     });
     res.status(200).json({
-      status: "success",
+      status: "Success",
       message: "Fetch order success!",
       data: orders,
     });
@@ -51,7 +51,7 @@ export async function readOrderById(
       },
     });
     res.status(200).json({
-      status: "success",
+      status: "Success",
       message: "Fetch single order success!",
       data: order,
     });
@@ -141,14 +141,14 @@ export async function updateOrder(
     if (!oldOrder) {
       throw appError("Order not found", 404);
     }
-    const updatedOrder = await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id },
       data: { status },
     });
     res.status(200).json({
       status: "Success",
-      message: `Order [${updatedOrder.id}] status updated to "${status}"!`,
-      data: updatedOrder,
+      message: `Order [${order.id}] status updated to "${status}"!`,
+      data: order,
     });
   } catch (err) {
     next(err);

@@ -30,10 +30,6 @@ export const cartSchema = Joi.object({
   qty: Joi.number().min(0).max(1000000).required(),
 });
 
-export const updateCartSchema = Joi.object({
-  qty: Joi.number().min(0).max(1000000).required(),
-});
-
 export const orderSchema = Joi.object({
   address: Joi.string().min(0).max(255).required(),
 });
