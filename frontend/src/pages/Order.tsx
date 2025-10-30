@@ -12,27 +12,42 @@ import { Button } from "@/components/ui/button";
 import Loading from "@/components/molecules/Loading";
 import Error from "@/components/molecules/Error";
 import Empty from "@/components/molecules/Empty";
+import { useState } from "react";
+import ButtonLoading from "@/components/molecules/ButtonLoading";
+import ButtonError from "@/components/molecules/ButtonError";
 
 function Order({
   orders,
   isLoad,
   isErr,
+  fetchCarts,
   fetchOrders,
 }: {
   orders: OrderType[];
   isLoad: boolean;
   isErr: string | null;
+  fetchCarts: () => Promise<void>;
   fetchOrders: () => Promise<void>;
 }) {
+  const [isLoadCancel, setIsLoadCancel] = useState<string | null>(null);
+  const [isErrCancel, setIsErrCancel] = useState<string | null>(null);
   const baseURL: string = import.meta.env.VITE_BASE_URL;
 
   async function handleCancel(id: string) {
-    try {
-      await api.delete(`/order/${id}/status`);
-    } catch (err: unknown) {
-      console.error(extractAxiosError(err));
-    }
-    fetchOrders();
+    setIsLoadCancel(id);
+
+    setIsErrCancel(null);
+    setTimeout(async () => {
+      try {
+        await api.delete(`/order/${id}/status`);
+      } catch (err: unknown) {
+        setIsErrCancel(extractAxiosError(err));
+      } finally {
+        setIsLoadCancel(null);
+        fetchCarts();
+        fetchOrders();
+      }
+    }, 500);
   }
 
   return (
@@ -71,15 +86,20 @@ function Order({
                 <TableCell>{order.product.price}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>
-                  {order.status === "pending" && (
-                    <Button
-                      variant="destructive"
-                      className="cursor-pointer"
-                      onClick={() => handleCancel(order.id)}
-                    >
-                      Cancel
-                    </Button>
-                  )}
+                  {order.status === "pending" &&
+                    (isLoadCancel === order.id ? (
+                      <ButtonLoading />
+                    ) : isErrCancel === order.id ? (
+                      <ButtonError />
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        className="cursor-pointer"
+                        onClick={() => handleCancel(order.id)}
+                      >
+                        Cancel
+                      </Button>
+                    ))}
                 </TableCell>
               </TableRow>
             ))}

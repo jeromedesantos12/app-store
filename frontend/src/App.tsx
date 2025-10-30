@@ -20,7 +20,7 @@ import Login from "./pages/Login";
 // import AdminRoute from "./routes/AdminRoute";
 import "./App.css";
 import Register from "./pages/Register";
-import CartOrderLayout from "./pages/CartOrderLayout";
+import CartOrderLayout from "./components/molecules/CartOrderLayout";
 import Order from "./pages/Order";
 import type { OrderType } from "./types/order";
 
@@ -189,13 +189,12 @@ function App() {
                   path="/cart"
                   element={
                     <Cart
-                      products={products}
                       carts={carts}
+                      products={products}
                       isLoad={isLoadCarts}
                       isErr={isErrCarts}
-                      fetchProducts={fetchProducts}
-                      fetchFilterProducts={fetchFilterProducts}
                       fetchCarts={fetchCarts}
+                      fetchOrders={fetchOrders}
                     />
                   }
                 />
@@ -206,6 +205,7 @@ function App() {
                       orders={orders}
                       isLoad={isLoadOrders}
                       isErr={isErrOrders}
+                      fetchCarts={fetchCarts}
                       fetchOrders={fetchOrders}
                     />
                   }

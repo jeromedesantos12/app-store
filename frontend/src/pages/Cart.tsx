@@ -15,17 +15,15 @@ function Cart({
   products,
   isLoad,
   isErr,
-  fetchProducts,
-  fetchFilterProducts,
   fetchCarts,
+  fetchOrders,
 }: {
   carts: CartType[];
   products: ProductType[];
   isLoad: boolean;
   isErr: string | null;
-  fetchProducts: () => Promise<void>;
-  fetchFilterProducts: () => Promise<void>;
   fetchCarts: () => Promise<void>;
+  fetchOrders: () => Promise<void>;
 }) {
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
   const [editingQty, setEditingQty] = useState(1);
@@ -33,6 +31,8 @@ function Cart({
   const [isErrUpdate, setIsErrUpdate] = useState<string | null>(null);
   const [isLoadDelete, setIsLoadDelete] = useState<string | null>(null);
   const [isErrDelete, setIsErrDelete] = useState<string | null>(null);
+  const [isLoadCheckout, setIsLoadCheckout] = useState<boolean | null>(false);
+  const [isErrCheckout, setIsErrCheckout] = useState<string | null>(null);
 
   function handleUpdate(id: string, qty: number) {
     setIsLoadUpdate(id);
@@ -48,9 +48,8 @@ function Cart({
         setEditingQty(0);
         setEditingCartId(null);
         setIsLoadUpdate(null);
-        fetchProducts();
-        fetchFilterProducts();
         fetchCarts();
+        fetchOrders();
       }
     }, 500);
   }
@@ -65,23 +64,24 @@ function Cart({
         setIsErrDelete(extractAxiosError(err));
       } finally {
         setIsLoadDelete(null);
-        fetchProducts();
-        fetchFilterProducts();
         fetchCarts();
+        fetchOrders();
       }
     }, 500);
   }
 
   function handleCheckout() {
+    setIsLoadCheckout(true);
+    setIsErrDelete(null);
     setTimeout(async () => {
       try {
         await api.post("/order");
       } catch (err: unknown) {
-        setIsErrUpdate(extractAxiosError(err));
+        setIsErrCheckout(extractAxiosError(err));
       } finally {
-        fetchProducts();
-        fetchFilterProducts();
+        setIsLoadCheckout(false);
         fetchCarts();
+        fetchOrders();
       }
     }, 500);
   }
@@ -220,11 +220,16 @@ function Cart({
           );
         })
       )}
-      {carts.length > 0 && (
-        <Button className="cursor-pointer" onClick={handleCheckout}>
-          Checkout
-        </Button>
-      )}
+      {carts.length > 0 &&
+        (isLoadCheckout ? (
+          <ButtonLoading />
+        ) : isErrCheckout ? (
+          <ButtonError />
+        ) : (
+          <Button className="cursor-pointer" onClick={handleCheckout}>
+            Checkout
+          </Button>
+        ))}
     </div>
   );
 }
