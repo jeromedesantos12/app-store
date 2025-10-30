@@ -20,6 +20,9 @@ import Login from "./pages/Login";
 // import AdminRoute from "./routes/AdminRoute";
 import "./App.css";
 import Register from "./pages/Register";
+import CartOrderLayout from "./pages/CartOrderLayout";
+import Order from "./pages/Order";
+import type { OrderType } from "./types/order";
 
 function App() {
   const [carts, setCarts] = useState<CartType[]>([]);
@@ -33,6 +36,9 @@ function App() {
   );
   const [isLoadCarts, setIsLoadCarts] = useState(false);
   const [isErrCarts, setIsErrCarts] = useState<string | null>(null);
+  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [isLoadOrders, setIsLoadOrders] = useState(false);
+  const [isErrOrders, setIsErrOrders] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce<string>(search, 500);
   const [nav, setNav] = useState(false);
@@ -80,9 +86,23 @@ function App() {
     }
   }
 
+  async function fetchOrders() {
+    try {
+      setIsLoadOrders(true);
+      const res = await api.get("/order/me");
+      setOrders(res.data.data);
+      setIsErrOrders(null);
+    } catch (err) {
+      setIsErrOrders(extractAxiosError(err));
+    } finally {
+      setIsLoadOrders(false);
+    }
+  }
+
   useEffect(() => {
     fetchProducts();
     fetchCarts();
+    fetchOrders();
   }, []);
 
   useEffect(() => {
@@ -159,9 +179,15 @@ function App() {
                 }
               /> */}
               <Route
-                path="/cart"
                 element={
                   <PrivateRoute>
+                    <CartOrderLayout />
+                  </PrivateRoute>
+                }
+              >
+                <Route
+                  path="/cart"
+                  element={
                     <Cart
                       products={products}
                       carts={carts}
@@ -171,9 +197,20 @@ function App() {
                       fetchFilterProducts={fetchFilterProducts}
                       fetchCarts={fetchCarts}
                     />
-                  </PrivateRoute>
-                }
-              />
+                  }
+                />
+                <Route
+                  path="/order"
+                  element={
+                    <Order
+                      orders={orders}
+                      isLoad={isLoadOrders}
+                      isErr={isErrOrders}
+                      fetchOrders={fetchOrders}
+                    />
+                  }
+                />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

@@ -133,12 +133,6 @@ export async function updateOrder(
         400
       );
     }
-    const oldOrder = await prisma.order.findUnique({
-      where: { id },
-    });
-    if (!oldOrder) {
-      throw appError("Order not found", 404);
-    }
     const order = await prisma.order.update({
       where: { id },
       data: { status },
@@ -146,6 +140,27 @@ export async function updateOrder(
     res.status(200).json({
       status: "Success",
       message: `Order [${order.id}] status updated to "${status}"!`,
+      data: order,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteOrder(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: "cancelled" },
+    });
+    res.status(200).json({
+      status: "Success",
+      message: `Order [${order.id}] status updated to "cancelled"!`,
       data: order,
     });
   } catch (err) {
