@@ -1,7 +1,7 @@
 import type { ProductType } from "@/types/product";
 import { type Dispatch, type SetStateAction } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import { Box, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   Card,
   CardAction,
@@ -75,9 +75,6 @@ function ProductList({
                     {product.name}
                   </CardTitle>
                   <CardDescription>{product.category}</CardDescription>
-                  <CardAction className="flex gap-2 items-center text-2xl font-black  text-cyan-500">
-                    <Box /> {product.stock}
-                  </CardAction>
                 </CardHeader>
                 <CardFooter className="flex justify-between gap-5">
                   <CardAction className="text-2xl font-black text-cyan-700 dark:text-zinc-300">

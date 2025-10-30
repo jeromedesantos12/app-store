@@ -9,13 +9,11 @@ function About() {
           About Us
         </h1>
         <p className="text-justify text-muted-foreground mb-5">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Sint
-          officiis pariatur iusto reiciendis amet maxime totam? Doloribus rerum
-          pariatur earum nostrum illo amet harum, mollitia magni voluptate vero
-          inventore eos. Commodi qui dolorum, earum tempora ea quod doloremque
-          consectetur sit modi fugiat itaque quis neque fugit. Sint aliquam vero
-          ipsam placeat. Sapiente, nesciunt dolore porro necessitatibus quis
-          doloribus quam tempora.
+          Saya Jeremy Santoso, pendiri sekaligus kreator di balik My Store.
+          Dengan latar belakang di bidang desain dan teknologi, saya membangun
+          toko ini untuk menghadirkan pengalaman belanja online yang lebih
+          personal, inspiratif, dan berkelas. Visi saya sederhana, menjadikan
+          setiap pelanggan merasa percaya diri melalui produk yang mereka pilih.
         </p>
         <Social />
       </div>

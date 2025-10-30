@@ -24,10 +24,17 @@ export const productSchema = Joi.object({
   description: Joi.string().min(0).max(255).required(),
   price: Joi.number().min(0).max(1000000).required(),
   stock: Joi.number().min(0).max(1000000).required(),
+  reorder: Joi.number().min(0).max(1000000).required(),
+  unit: Joi.string().min(3).max(50).required(),
+  warehouse: Joi.string().min(0).max(255).required(),
 });
 
 export const cartSchema = Joi.object({
   productId: Joi.string().min(0).max(255).required(),
+  qty: Joi.number().min(0).max(1000000).required(),
+});
+
+export const cartUpdateSchema = Joi.object({
   qty: Joi.number().min(0).max(1000000).required(),
 });
 

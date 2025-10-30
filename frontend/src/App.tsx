@@ -16,8 +16,8 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import ProductForm from "./pages/ProductForm";
-import AdminRoute from "./routes/AdminRoute";
+// import ProductForm from "./pages/ProductForm";
+// import AdminRoute from "./routes/AdminRoute";
 import "./App.css";
 import Register from "./pages/Register";
 
@@ -37,12 +37,12 @@ function App() {
   const debouncedSearch = useDebounce<string>(search, 500);
   const [nav, setNav] = useState(false);
 
-  async function fetchFilterProducts(name: string = "") {
+  async function fetchFilterProducts(search: string = "") {
     try {
       setIsLoadFilterProducts(true);
-      const res = await api.get("/product/search", {
+      const res = await api.get("/product", {
         params: {
-          name: name,
+          search,
         },
       });
       setFilterProducts(res.data.data);
@@ -144,7 +144,7 @@ function App() {
                   }
                 />
               </Route>
-              <Route
+              {/* <Route
                 path="/add"
                 element={
                   <PrivateRoute>
@@ -157,7 +157,7 @@ function App() {
                     </AdminRoute>
                   </PrivateRoute>
                 }
-              />
+              /> */}
               <Route
                 path="/cart"
                 element={

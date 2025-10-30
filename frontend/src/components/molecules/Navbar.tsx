@@ -74,7 +74,7 @@ function Navbar({
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-            {token?.role === "admin" && (
+            {/* {token?.role === "admin" && (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/add" className="">
@@ -82,7 +82,7 @@ function Navbar({
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
-            )}
+            )} */}
             {token?.role && (
               <>
                 <NavigationMenuItem>

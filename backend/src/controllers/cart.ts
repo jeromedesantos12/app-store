@@ -87,6 +87,45 @@ export async function upsertCart(
   }
 }
 
+export async function updateCart(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const { qty } = req.body;
+    const existingCart = await prisma.cart.findUnique({
+      where: { id },
+      include: { product: true },
+    });
+    if (existingCart === null) {
+      throw appError("Cart item not found!", 404);
+    }
+    if (qty <= 0) {
+      await prisma.cart.delete({ where: { id } });
+      return res.status(200).json({
+        status: "Success",
+        message: `Cart item [${id}] removed (qty <= 0)`,
+      });
+    }
+    const updatedCart = await prisma.cart.update({
+      where: { id },
+      data: {
+        qty,
+        total: Number(existingCart.product.price) * qty,
+      },
+    });
+    res.status(200).json({
+      status: "Success",
+      message: `Cart item [${id}] updated successfully!`,
+      data: updatedCart,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function deleteCart(
   req: Request,
   res: Response,

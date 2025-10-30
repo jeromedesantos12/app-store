@@ -109,7 +109,17 @@ export async function createProduct(
   next: NextFunction
 ) {
   try {
-    const { supplierId, name, category, description, price, stock } = req.body;
+    const {
+      supplierId,
+      name,
+      category,
+      description,
+      price,
+      stock,
+      reorder,
+      unit,
+      warehouse,
+    } = req.body;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
     const product = await prisma.product.create({
@@ -121,6 +131,9 @@ export async function createProduct(
         description,
         price: Number(price),
         stock: Number(stock),
+        reorder: Number(reorder),
+        unit,
+        warehouse,
       },
     });
     const savePath = resolve("src", "uploads", "product", fileName);

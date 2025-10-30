@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, extractAxiosError } from "@/services/api";
 import {
   Card,
@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 function Login() {
   const navigate = useNavigate();
   const { fetchToken } = useAuth();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoadLog, setIsLoadLog] = useState(false);
   const [isErrLog, setIsErrLog] = useState<string | null>(null);
@@ -30,9 +30,10 @@ function Login() {
     setTimeout(async () => {
       try {
         await api.post("/login", {
-          email,
+          emailOrUsername,
           password,
         });
+        fetchToken();
       } catch (err: unknown) {
         setIsErrLog(extractAxiosError(err));
       } finally {
@@ -50,7 +51,14 @@ function Login() {
           <CardTitle className="text-cyan-700 font-black text-2xl dark:text-zinc-300">
             Login
           </CardTitle>
-          <CardDescription>Hei, good to see you again!</CardDescription>
+          <CardDescription className="flex gap-1">
+            <p>Belum punya akun?</p>
+            <Link to="/register">
+              <span className="text-zinc-300 dark:text-cyan-700 font-bold">
+                Register
+              </span>
+            </Link>
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <form
@@ -63,14 +71,14 @@ function Login() {
                 htmlFor="username"
                 className="text-cyan-700 dark:text-zinc-300"
               >
-                Username
+                Email or Username
               </Label>
               <Input
                 className="rounded-lg"
                 type="text"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="emailOrUsername"
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
                 required
               />
             </div>

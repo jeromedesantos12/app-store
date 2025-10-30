@@ -39,7 +39,7 @@ function Cart({
     setIsErrUpdate(null);
     setTimeout(async () => {
       try {
-        await api.put(`/order/${id}`, {
+        await api.put(`/cart/${id}`, {
           qty,
         });
       } catch (err: unknown) {
@@ -60,7 +60,7 @@ function Cart({
     setIsErrDelete(null);
     setTimeout(async () => {
       try {
-        await api.delete(`/order/${id}`);
+        await api.delete(`/cart/${id}`);
       } catch (err: unknown) {
         setIsErrDelete(extractAxiosError(err));
       } finally {

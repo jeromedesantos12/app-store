@@ -33,16 +33,8 @@ import ButtonError from "@/components/molecules/ButtonError";
 
 const categories = [
   {
-    category: "backrooms",
-    label: "Backrooms",
-  },
-  {
-    category: "scp",
-    label: "SCP",
-  },
-  {
-    category: "fnaf",
-    label: "FNAF",
+    category: "jaket",
+    label: "Jaket",
   },
 ];
 
