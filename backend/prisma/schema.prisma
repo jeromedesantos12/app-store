@@ -30,6 +30,7 @@ model User {
   email       String      @unique @db.VarChar(255)
   password    String      @db.VarChar(255)
   role        UserRole    @default(customer)
+  address     String?     @db.VarChar(255)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?   // soft delete
@@ -95,7 +96,6 @@ model Order {
   qty         Int          @default(0)
   total       Decimal      @db.Decimal(10, 2)
   status      OrderStatus  @default(pending)
-  address     String?      @db.VarChar(255)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

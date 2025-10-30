@@ -180,7 +180,7 @@ export async function createUser(
   next: NextFunction
 ) {
   try {
-    const { username, name, email, password } = req.body;
+    const { username, name, email, address, password } = req.body;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
     const hashedPassword = await hashPassword(password);
@@ -202,6 +202,7 @@ export async function createUser(
         username,
         name,
         email,
+        address,
         password: hashedPassword,
       },
     });
@@ -223,7 +224,7 @@ export async function updateUser(
 ) {
   try {
     const { id } = (req as any).user;
-    const { username, name, email, password } = req.body;
+    const { username, name, email, address, password } = req.body;
     const existingUser = (req as any).model;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
@@ -234,6 +235,7 @@ export async function updateUser(
         username: username ? username : existingUser.username,
         name: name ? name : existingUser.name,
         email: email ? email : existingUser.email,
+        address: address ? address : existingUser.address,
         password: hashedPassword ? hashedPassword : existingUser.password,
       },
       where: {

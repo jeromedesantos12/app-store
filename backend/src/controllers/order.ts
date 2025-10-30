@@ -19,7 +19,7 @@ export async function readOrders(
           select: { name: true, price: true },
         },
         user: {
-          select: { name: true, username: true },
+          select: { name: true, username: true, address: true },
         },
       },
       orderBy: {
@@ -67,7 +67,6 @@ export async function createOrder(
 ) {
   try {
     const userId = (req as any).user.id;
-    const { address } = req.body;
     const cartItems = await prisma.cart.findMany({
       where: { userId },
       include: { product: true },
@@ -91,7 +90,6 @@ export async function createOrder(
             qty: item.qty,
             total: item.total,
             status: "pending",
-            address,
           },
         });
         await tx.product.update({

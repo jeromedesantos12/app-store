@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { auth, isCustomer } from "../middlewares/auth";
-import { orderSchema, updateOrderSchema } from "../utils/joi";
+import { orderSchema } from "../utils/joi";
 import { validate } from "../middlewares/validate";
 import { isExist } from "../middlewares/existing";
 import {
@@ -14,11 +14,11 @@ const router = Router();
 
 router.get("/order/me", auth, isCustomer, readOrders);
 router.get("/order/:id", auth, isCustomer, readOrderById);
-router.post("/order", auth, isCustomer, validate(orderSchema), createOrder);
+router.post("/order", auth, isCustomer, createOrder);
 router.patch(
   "/order/:id/status",
   isCustomer,
-  validate(updateOrderSchema),
+  validate(orderSchema),
   isExist("order"),
   updateOrder
 );
