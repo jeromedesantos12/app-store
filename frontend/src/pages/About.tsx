@@ -6,7 +6,7 @@ function About() {
     <div className="bg-white dark:bg-zinc-900 flex gap-4 flex-col max-w-100 md:flex-row md:max-w-220 rounded-2xl border-2">
       <div className="p-10 flex flex-col gap-5 flex-2">
         <h1 className="text-2xl font-black text-cyan-700 dark:text-zinc-300">
-          About Us
+          Tentang Saya
         </h1>
         <p className="text-justify text-muted-foreground mb-5">
           Saya Jeremy Santoso, pendiri sekaligus kreator di balik My Store.

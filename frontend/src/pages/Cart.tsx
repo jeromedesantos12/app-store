@@ -220,9 +220,11 @@ function Cart({
           );
         })
       )}
-      <Button className="cursor-pointer" onClick={handleCheckout}>
-        Checkout
-      </Button>
+      {carts.length > 0 && (
+        <Button className="cursor-pointer" onClick={handleCheckout}>
+          Checkout
+        </Button>
+      )}
     </div>
   );
 }
