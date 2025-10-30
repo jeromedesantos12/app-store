@@ -70,7 +70,7 @@ function App() {
   async function fetchCarts() {
     try {
       setIsLoadCarts(true);
-      const res = await api.get("/order");
+      const res = await api.get("/cart/me");
       setCarts(res.data.data);
       setIsErrCarts(null);
     } catch (err) {

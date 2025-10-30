@@ -16,10 +16,10 @@ export async function readOrders(
       },
       include: {
         product: {
-          select: { name: true, price: true },
+          select: { image: true, name: true, price: true },
         },
         user: {
-          select: { name: true, username: true, address: true },
+          select: { profile: true, name: true, username: true, address: true },
         },
       },
       orderBy: {

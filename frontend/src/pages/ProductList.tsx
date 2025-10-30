@@ -66,7 +66,7 @@ function ProductList({
                 <CardContent>
                   <img
                     src={imageUrl}
-                    alt={`Image for ${imageUrl}`}
+                    alt={`Image for ${product.name}`}
                     className="object-cover object-center h-50 rounded-2xl"
                   />
                 </CardContent>

@@ -72,6 +72,20 @@ function Cart({
     }, 500);
   }
 
+  function handleCheckout() {
+    setTimeout(async () => {
+      try {
+        await api.post("/order");
+      } catch (err: unknown) {
+        setIsErrUpdate(extractAxiosError(err));
+      } finally {
+        fetchProducts();
+        fetchFilterProducts();
+        fetchCarts();
+      }
+    }, 500);
+  }
+
   return (
     <div className="w-full max-w-200 flex flex-col gap-5">
       {isLoad ? (
@@ -206,6 +220,9 @@ function Cart({
           );
         })
       )}
+      <Button className="cursor-pointer" onClick={handleCheckout}>
+        Checkout
+      </Button>
     </div>
   );
 }

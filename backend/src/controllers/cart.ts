@@ -14,6 +14,7 @@ export async function readCarts(
       include: {
         product: {
           select: {
+            image: true,
             name: true,
             price: true,
           },
