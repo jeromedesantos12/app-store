@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 
 function ButtonLoading() {
   return (
-    <Button disabled className="w-full">
+    <Button disabled className="flex-1">
       <LoaderCircle className="animate-spin" />
     </Button>
   );
