@@ -16,13 +16,16 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-// import ProductForm from "./pages/ProductForm";
-// import AdminRoute from "./routes/AdminRoute";
-import "./App.css";
+import ProductForm from "./pages/ProductForm";
+import AdminRoute from "./routes/AdminRoute";
 import Register from "./pages/Register";
-import CartOrderLayout from "./components/molecules/CartOrderLayout";
 import Order from "./pages/Order";
+import ProductOrderLayout from "./components/molecules/CartOrder";
 import type { OrderType } from "./types/order";
+import "./App.css";
+import { CustomerRoute } from "./routes/CustomerRoute";
+import SupplierForm from "./pages/SupplierForm";
+import ProductSupplierLayout from "./components/molecules/ProductSupplier";
 
 function App() {
   const [carts, setCarts] = useState<CartType[]>([]);
@@ -138,13 +141,15 @@ function App() {
                 path="/product"
                 element={
                   <PrivateRoute>
-                    <ProductList
-                      search={search}
-                      products={filterProducts}
-                      isLoad={isLoadFilterProducts}
-                      isErr={isErrFilterProducts}
-                      setSearch={setSearch}
-                    />
+                    <CustomerRoute>
+                      <ProductList
+                        search={search}
+                        products={filterProducts}
+                        isLoad={isLoadFilterProducts}
+                        isErr={isErrFilterProducts}
+                        setSearch={setSearch}
+                      />
+                    </CustomerRoute>
                   </PrivateRoute>
                 }
               >
@@ -152,36 +157,47 @@ function App() {
                   path=":productId"
                   element={
                     <PrivateRoute>
-                      <ProductDetail
-                        products={products}
-                        isLoad={isLoadProducts}
-                        isErr={isErrProducts}
-                        fetchProducts={fetchProducts}
-                        fetchFilterProducts={fetchFilterProducts}
-                        fetchCarts={fetchCarts}
-                      />
+                      <CustomerRoute>
+                        <ProductDetail
+                          products={products}
+                          isLoad={isLoadProducts}
+                          isErr={isErrProducts}
+                          fetchProducts={fetchProducts}
+                          fetchFilterProducts={fetchFilterProducts}
+                          fetchCarts={fetchCarts}
+                        />
+                      </CustomerRoute>
                     </PrivateRoute>
                   }
                 />
               </Route>
-              {/* <Route
-                path="/add"
-                element={
-                  <PrivateRoute>
-                    <AdminRoute>
-                      <ProductForm
-                        products={products}
-                        fetchProducts={fetchProducts}
-                        fetchFilterProducts={fetchFilterProducts}
-                      />
-                    </AdminRoute>
-                  </PrivateRoute>
-                }
-              /> */}
               <Route
                 element={
                   <PrivateRoute>
-                    <CartOrderLayout />
+                    <AdminRoute>
+                      <ProductSupplierLayout />
+                    </AdminRoute>
+                  </PrivateRoute>
+                }
+              >
+                <Route
+                  path="/productForm"
+                  element={
+                    <ProductForm
+                      products={products}
+                      fetchProducts={fetchProducts}
+                      fetchFilterProducts={fetchFilterProducts}
+                    />
+                  }
+                />
+                <Route path="/supplierForm" element={<SupplierForm />} />
+              </Route>
+              <Route
+                element={
+                  <PrivateRoute>
+                    <CustomerRoute>
+                      <ProductOrderLayout />
+                    </CustomerRoute>
                   </PrivateRoute>
                 }
               >

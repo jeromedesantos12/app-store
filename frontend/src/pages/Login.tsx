@@ -39,7 +39,7 @@ function Login() {
       } finally {
         setIsLoadLog(false);
         fetchToken();
-        navigate("/product");
+        navigate("/");
       }
     }, 500);
   }
