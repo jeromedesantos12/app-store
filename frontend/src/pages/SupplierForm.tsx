@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import ButtonError from "@/components/molecules/ButtonError";
 import { Textarea } from "@/components/ui/textarea";
-
+import { cn } from "@/lib/utils";
 function SupplierForm() {
   const [suppliers, setSuppliers] = useState<SupplierType[]>([]);
   const [name, setName] = useState("");
@@ -76,12 +76,9 @@ function SupplierForm() {
   function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingSupplier) return;
-
     setIsLoadUpdate(editingSupplier.id);
     setIsErrUpdate(null);
-
     const payload = { name, phone, email, address };
-
     setTimeout(async () => {
       try {
         await api.put(`/supplier/${editingSupplier.id}`, payload);
@@ -130,16 +127,16 @@ function SupplierForm() {
   }
 
   return (
-    <div className=" flex gap-10 flex-col md:flex-row flex-wrap w-full justify-center">
-      <div className="flex flex-col gap-2 w-full md:max-w-3xl">
+    <div className=" flex gap-10 flex-wrap w-full justify-center">
+      <div className="flex flex-col gap-2 md:max-w-2xl flex-1">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead className="w-fit">Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Address</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right w-fit">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -193,7 +190,7 @@ function SupplierForm() {
           </TableBody>
         </Table>
       </div>
-      <Card className="bg-white dark:bg-zinc-900 max-w-110 flex flex-col gap-5 md:max-w-md w-full">
+      <Card className="bg-white dark:bg-zinc-900 flex flex-col gap-5 md:max-w-md flex-1">
         <CardHeader className="flex flex-col gap-2 mb-5 items-center">
           <CardTitle className="text-cyan-700 font-black text-2xl dark:text-zinc-300">
             Supplier Form
@@ -291,7 +288,10 @@ function SupplierForm() {
                   <Button
                     type="submit"
                     variant="default"
-                    className="rounded-lg bg-cyan-500 hover:bg-cyan-700 font-bold cursor-pointer dark:bg-cyan-700 dark:hover:bg-cyan-500 dark:text-zinc-300 w-full"
+                    className={cn(
+                      "rounded-lg bg-cyan-500 hover:bg-cyan-700 font-bold cursor-pointer dark:bg-cyan-700 dark:hover:bg-cyan-500 dark:text-zinc-300",
+                      editingSupplier ? "w-full md:w-auto flex-1" : "w-full"
+                    )}
                   >
                     {editingSupplier ? "Update Supplier" : "Add Supplier"}
                   </Button>

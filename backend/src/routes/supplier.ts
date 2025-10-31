@@ -23,7 +23,7 @@ router.post(
   createSupplier
 );
 router.put(
-  "/supplier/me",
+  "/supplier/:id",
   auth,
   isAdmin,
   isExist("supplier", false),

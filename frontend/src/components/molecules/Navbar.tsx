@@ -78,7 +78,7 @@ function Navbar({
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/productForm" className="">
-                    PRODUCT
+                    DASHBOARD
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>

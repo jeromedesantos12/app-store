@@ -227,8 +227,8 @@ function ProductForm({
   }
 
   return (
-    <div className=" flex gap-10 flex-col md:flex-row flex-wrap w-full justify-center">
-      <div className="flex flex-col gap-2 w-full md:max-w-2xl">
+    <div className=" flex gap-10 flex-wrap w-full justify-center">
+      <div className="flex flex-col gap-2 md:max-w-2xl flex-1">
         <Table>
           <TableHeader>
             <TableRow>
@@ -298,7 +298,7 @@ function ProductForm({
           </TableBody>
         </Table>
       </div>
-      <Card className="bg-white dark:bg-zinc-900 max-w-110 flex flex-col gap-5 md:max-w-md w-full">
+      <Card className="bg-white dark:bg-zinc-900 flex flex-col gap-5 md:max-w-md flex-1">
         <CardHeader className="flex flex-col gap-2 mb-5 items-center">
           <CardTitle className="text-cyan-700 font-black text-2xl dark:text-zinc-300">
             Product Form

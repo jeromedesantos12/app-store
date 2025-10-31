@@ -118,7 +118,7 @@ export async function updateSupplier(
   next: NextFunction
 ) {
   try {
-    const { id } = (req as any).user;
+    const { id } = req.params;
     const { name, phone, email, address } = req.body;
     const existingSupplier = (req as any).model;
     const supplier = await prisma.supplier.update({
