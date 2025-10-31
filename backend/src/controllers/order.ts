@@ -12,7 +12,6 @@ export async function readOrders(
     const orders = await prisma.order.findMany({
       where: {
         userId,
-        status: { not: "cancelled" },
       },
       include: {
         product: {
@@ -44,10 +43,12 @@ export async function readOrderById(
   try {
     const id = req.params.id;
     const order = await prisma.order.findUnique({
-      where: { id, status: { not: "cancelled" } },
+      where: { id },
       include: {
-        product: { select: { name: true, price: true } },
-        user: { select: { name: true, username: true } },
+        product: { select: { image: true, name: true, price: true } },
+        user: {
+          select: { profile: true, name: true, username: true, address: true },
+        },
       },
     });
     res.status(200).json({

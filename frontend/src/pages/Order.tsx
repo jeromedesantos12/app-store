@@ -31,11 +31,9 @@ function Order({
 }) {
   const [isLoadCancel, setIsLoadCancel] = useState<string | null>(null);
   const [isErrCancel, setIsErrCancel] = useState<string | null>(null);
-  const baseURL: string = import.meta.env.VITE_BASE_URL;
 
   async function handleCancel(id: string) {
     setIsLoadCancel(id);
-
     setIsErrCancel(null);
     setTimeout(async () => {
       try {
@@ -72,37 +70,41 @@ function Order({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="flex items-center gap-4">
-                  <img
-                    src={`${baseURL}/uploads/product/${order.product.image}`}
-                    alt={order.product.name}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
-                  <span>{order.product.name}</span>
-                </TableCell>
-                <TableCell>{order.qty}</TableCell>
-                <TableCell>{order.product.price}</TableCell>
-                <TableCell>{order.status}</TableCell>
-                <TableCell>
-                  {order.status === "pending" &&
-                    (isLoadCancel === order.id ? (
-                      <ButtonLoading />
-                    ) : isErrCancel === order.id ? (
-                      <ButtonError />
-                    ) : (
-                      <Button
-                        variant="destructive"
-                        className="cursor-pointer"
-                        onClick={() => handleCancel(order.id)}
-                      >
-                        Cancel
-                      </Button>
-                    ))}
-                </TableCell>
-              </TableRow>
-            ))}
+            {orders.map((order) => {
+              const baseURL: string = import.meta.env.VITE_BASE_URL;
+              const imageUrl = `${baseURL}/uploads/product/${order.product.image}`;
+              return (
+                <TableRow key={order.id}>
+                  <TableCell className="flex items-center gap-4">
+                    <img
+                      src={imageUrl}
+                      alt={order.product.name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
+                    <span>{order.product.name}</span>
+                  </TableCell>
+                  <TableCell>{order.qty}</TableCell>
+                  <TableCell>{order.product.price}</TableCell>
+                  <TableCell>{order.status}</TableCell>
+                  <TableCell>
+                    {order.status === "pending" &&
+                      (isLoadCancel === order.id ? (
+                        <ButtonLoading />
+                      ) : isErrCancel === order.id ? (
+                        <ButtonError />
+                      ) : (
+                        <Button
+                          variant="destructive"
+                          className="cursor-pointer"
+                          onClick={() => handleCancel(order.id)}
+                        >
+                          Cancel
+                        </Button>
+                      ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
