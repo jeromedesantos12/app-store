@@ -15,7 +15,7 @@ function Home() {
   return (
     <div className="flex flex-col items-center w-full">
       {/* ===== HERO SECTION ===== */}
-      <section className="max-w-7xl mt-10 px-5 md:px-20 flex flex-col-reverse md:flex-row items-center justify-between gap-10">
+      <section className="max-w-7xl mt-20 px-5 md:px-20 flex flex-col-reverse md:flex-row items-center justify-between gap-10">
         <div className="flex flex-col text-center md:text-left gap-5 md:w-1/2">
           <h1 className="text-3xl md:text-5xl font-black text-cyan-700 dark:text-zinc-100">
             Temukan Gaya Terbaikmu di{" "}
@@ -62,7 +62,10 @@ function Home() {
       </section>
 
       {/* ===== WHY CHOOSE US ===== */}
-      <section id="why" className="max-w-7xl py-20 px-5 md:px-20 text-center">
+      <section
+        id="why"
+        className="max-w-7xl pt-50 pb-20 px-5 md:px-20 text-center"
+      >
         <h2 className="text-3xl font-bold mb-10 text-cyan-700 dark:text-zinc-100">
           Kenapa Pilih My Store?
         </h2>
@@ -90,25 +93,6 @@ function Home() {
               dikemas dengan aman.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* ===== ABOUT SECTION ===== */}
-      <section
-        id="about"
-        className="py-20 px-5 md:px-20 max-w-7xl bg-zinc-50 dark:bg-zinc-900"
-      >
-        <div className="max-w-4xl mx-auto text-center flex flex-col gap-5">
-          <h2 className="text-3xl font-bold text-cyan-700 dark:text-zinc-100">
-            Tentang Kami
-          </h2>
-          <p className="text-muted-foreground text-justify leading-relaxed">
-            My Store adalah toko online yang berfokus pada produk-produk fashion
-            dan perlengkapan bergaya modern. Kami percaya bahwa setiap orang
-            berhak tampil percaya diri dengan kualitas terbaik tanpa harus
-            menguras dompet. Didirikan sejak 2020, kami terus berkembang dan
-            dipercaya oleh ribuan pelanggan di seluruh Indonesia.
-          </p>
         </div>
       </section>
     </div>
