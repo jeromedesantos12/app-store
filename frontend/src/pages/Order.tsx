@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { OrderType } from "@/types/order";
 import { api, extractAxiosError } from "@/services/api";
 import {
@@ -89,7 +90,24 @@ function Order({
                   </TableCell>
                   <TableCell>{order.qty}</TableCell>
                   <TableCell>{order.product.price}</TableCell>
-                  <TableCell>{order.status}</TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "px-2 py-1 rounded-full text-xs font-semibold",
+                        order.status === "pending" &&
+                          "bg-yellow-200 text-yellow-800",
+                        order.status === "paid" && "bg-blue-200 text-blue-800",
+                        order.status === "shipped" &&
+                          "bg-purple-200 text-purple-800",
+                        order.status === "completed" &&
+                          "bg-green-200 text-green-800",
+                        order.status === "cancelled" &&
+                          "bg-red-200 text-red-800"
+                      )}
+                    >
+                      {order.status}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     {order.status === "pending" &&
                       (isLoadCancel === order.id ? (

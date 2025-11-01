@@ -2,6 +2,35 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/client";
 import { appError } from "../utils/error";
 
+export async function readAllOrders(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        product: {
+          select: { image: true, name: true, price: true },
+        },
+        user: {
+          select: { profile: true, name: true, username: true, address: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.status(200).json({
+      status: "Success",
+      message: "Fetch all orders success!",
+      data: orders,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function readOrders(
   req: Request,
   res: Response,

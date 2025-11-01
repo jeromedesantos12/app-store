@@ -78,7 +78,7 @@ function ProductList({
                 </CardHeader>
                 <CardFooter className="flex justify-between gap-5">
                   <CardAction className="text-2xl font-black text-cyan-700 dark:dark:text-cyan-500">
-                    {product.price} $
+                    $ {product.price}
                   </CardAction>
                 </CardFooter>
               </Card>

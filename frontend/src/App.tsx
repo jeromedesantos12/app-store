@@ -1,3 +1,4 @@
+import OrderStatus from "./pages/OrderStatus";
 import type { ProductType } from "./types/product";
 import type { CartType } from "./types/cart";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -32,6 +33,7 @@ import type { SupplierType } from "./types/supplier";
 function App() {
   const [carts, setCarts] = useState<CartType[]>([]);
   const [orders, setOrders] = useState<OrderType[]>([]);
+  const [allOrders, setAllOrders] = useState<OrderType[]>([]);
   const [products, setProducts] = useState<ProductType[]>([]);
   const [productsAll, setProductsAll] = useState<ProductType[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierType[]>([]);
@@ -49,6 +51,8 @@ function App() {
   const [isErrCarts, setIsErrCarts] = useState<string | null>(null);
   const [isLoadOrders, setIsLoadOrders] = useState(false);
   const [isErrOrders, setIsErrOrders] = useState<string | null>(null);
+  const [isLoadAllOrders, setIsLoadAllOrders] = useState(false);
+  const [isErrAllOrders, setIsErrAllOrders] = useState<string | null>(null);
   const [isLoadSuppliers, setIsLoadSuppliers] = useState(false);
   const [isErrSuppliers, setIsErrSuppliers] = useState<string | null>(null);
   const [isLoadSuppliersAll, setIsLoadSuppliersAll] = useState(false);
@@ -128,6 +132,19 @@ function App() {
     }
   }
 
+  async function fetchOrdersAll() {
+    try {
+      setIsLoadAllOrders(true);
+      const res = await api.get("/order/all");
+      setAllOrders(res.data.data);
+      setIsErrAllOrders(null);
+    } catch (err) {
+      setIsErrAllOrders(extractAxiosError(err));
+    } finally {
+      setIsLoadAllOrders(false);
+    }
+  }
+
   async function fetchSuppliers() {
     try {
       setIsLoadSuppliers(true);
@@ -156,11 +173,12 @@ function App() {
 
   useEffect(() => {
     fetchProducts();
-    fetchProductsAll();
     fetchCarts();
     fetchOrders();
     fetchSuppliers();
+    fetchProductsAll();
     fetchSuppliersAll();
+    fetchOrdersAll();
   }, []);
 
   useEffect(() => {
@@ -263,6 +281,17 @@ function App() {
                       isLoad={isLoadSuppliersAll}
                       isErr={isErrSuppliersAll}
                       fetchSuppliers={fetchSuppliersAll}
+                    />
+                  }
+                />
+                <Route
+                  path="/order-status"
+                  element={
+                    <OrderStatus
+                      orders={allOrders}
+                      isLoad={isLoadAllOrders}
+                      isErr={isErrAllOrders}
+                      fetchOrdersAll={fetchOrdersAll}
                     />
                   }
                 />
