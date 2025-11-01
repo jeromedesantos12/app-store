@@ -10,6 +10,7 @@ import {
   logoutUser,
   createUser,
   readUsers,
+  readUsersAll,
   readUser,
   verifyUser,
   updateUser,
@@ -32,6 +33,7 @@ router.post(
 );
 router.get("/verify", auth, verifyUser);
 router.get("/user", auth, isAdmin, readUsers);
+router.get("/userAll", auth, isAdmin, readUsersAll);
 router.get("/user/me", auth, readUser);
 router.put(
   "/user/me",

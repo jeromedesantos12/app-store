@@ -5,6 +5,7 @@ import { auth, isAdmin } from "../middlewares/auth";
 import { isExist } from "../middlewares/existing";
 import {
   readSuppliers,
+  readSuppliersAll,
   readSupplier,
   createSupplier,
   updateSupplier,
@@ -14,6 +15,7 @@ import {
 
 const router = Router();
 router.get("/supplier", auth, readSuppliers);
+router.get("/supplierAll", auth, readSuppliersAll);
 router.get("/supplier/:id", auth, readSupplier);
 router.post(
   "/supplier",

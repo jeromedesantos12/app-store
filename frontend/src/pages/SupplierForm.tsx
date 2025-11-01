@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api, extractAxiosError } from "@/services/api";
-import { SquarePen, Trash2 } from "lucide-react";
+import { RotateCcw, SquarePen, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,70 +22,85 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ButtonError from "@/components/molecules/ButtonError";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-function SupplierForm() {
-  const [suppliers, setSuppliers] = useState<SupplierType[]>([]);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [isLoad, setIsLoad] = useState(false);
-  const [isErr, setIsErr] = useState<string | null>(null);
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { supplierSchema } from "@/lib/schemas";
+import { z } from "zod";
+import toast from "react-hot-toast";
+import Loading from "@/components/molecules/Loading";
+import Error from "@/components/molecules/Error";
+
+function SupplierForm({
+  suppliers,
+  isLoad,
+  isErr,
+  fetchSuppliers,
+}: {
+  suppliers: SupplierType[];
+  isLoad: boolean;
+  isErr: string | null;
+  fetchSuppliers: () => Promise<void>;
+}) {
+  const [isLoadAdd, setIsLoadAdd] = useState<boolean>(false);
   const [isLoadUpdate, setIsLoadUpdate] = useState<string | null>(null);
-  const [isErrUpdate, setIsErrUpdate] = useState<string | null>(null);
+  const [isLoadRestore, setIsLoadRestore] = useState<string | null>(null);
   const [isLoadDelete, setIsLoadDelete] = useState<string | null>(null);
-  const [isErrDelete, setIsErrDelete] = useState<string | null>(null);
   const [editingSupplier, setEditingSupplier] = useState<SupplierType | null>(
     null
   );
 
-  async function fetchSuppliers() {
-    try {
-      const res = await api.get("/supplier");
-      setSuppliers(res.data.data);
-    } catch (error) {
-      console.error("Failed to fetch suppliers", error);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<z.infer<typeof supplierSchema>>({
+    resolver: zodResolver(supplierSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      address: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof supplierSchema>) {
+    if (editingSupplier) {
+      handleUpdate(values);
+    } else {
+      handleAdd(values);
     }
   }
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
-  function handleAdd(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsLoad(true);
-    const payload = { name, phone, email, address };
+  function handleAdd(values: z.infer<typeof supplierSchema>) {
+    setIsLoadAdd(true);
     setTimeout(async () => {
-      setIsLoad(true);
-      setIsErr(null);
       try {
-        await api.post("/supplier", payload);
-        handleCancelEdit();
+        await api.post("/supplier", values);
+        toast.success("Supplier added successfully!");
       } catch (err: unknown) {
-        setIsErr(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
-        setIsLoad(false);
+        handleCancelEdit();
+        setIsLoadAdd(false);
         fetchSuppliers();
       }
     }, 500);
   }
 
-  function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function handleUpdate(values: z.infer<typeof supplierSchema>) {
     if (!editingSupplier) return;
     setIsLoadUpdate(editingSupplier.id);
-    setIsErrUpdate(null);
-    const payload = { name, phone, email, address };
     setTimeout(async () => {
       try {
-        await api.put(`/supplier/${editingSupplier.id}`, payload);
-        handleCancelEdit();
+        await api.put(`/supplier/${editingSupplier.id}`, values);
+        toast.success("Supplier updated successfully!");
       } catch (err: unknown) {
-        setIsErrUpdate(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
+        handleCancelEdit();
         setIsLoadUpdate(null);
         fetchSuppliers();
       }
@@ -94,22 +109,18 @@ function SupplierForm() {
 
   function handleEditClick(supplier: SupplierType) {
     setEditingSupplier(supplier);
-    setName(supplier.name);
-    setPhone(supplier.phone);
-    setEmail(supplier.email);
-    setAddress(supplier.address);
-    setIsErr(null);
+    reset(supplier);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleDelete(id: string) {
     setIsLoadDelete(id);
-    setIsErrDelete(null);
     setTimeout(async () => {
       try {
         await api.delete(`/supplier/${id}`);
+        toast.success("Supplier deleted successfully!");
       } catch (err: unknown) {
-        setIsErrDelete(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setIsLoadDelete(null);
         fetchSuppliers();
@@ -117,13 +128,24 @@ function SupplierForm() {
     }, 500);
   }
 
+  function handleRestore(id: string) {
+    setIsLoadRestore(id);
+    setTimeout(async () => {
+      try {
+        await api.patch(`/supplier/${id}/restore`);
+        toast.success("Supplier restored successfully!");
+      } catch (err: unknown) {
+        toast.error(extractAxiosError(err));
+      } finally {
+        setIsLoadRestore(null);
+        fetchSuppliers();
+      }
+    }, 500);
+  }
+
   function handleCancelEdit() {
     setEditingSupplier(null);
-    setName("");
-    setPhone("");
-    setEmail("");
-    setAddress("");
-    setIsErr(null);
+    reset();
   }
 
   return (
@@ -138,39 +160,57 @@ function SupplierForm() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {suppliers.length > 0 ? (
+            {isLoad ? (
+              <Loading />
+            ) : isErr ? (
+              <Error error={isErr} />
+            ) : suppliers.length > 0 ? (
               suppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
                   <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>{supplier.phone}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
+                      {isLoadRestore === supplier.id ? (
+                        <ButtonLoading className="w-9 h-9" />
+                      ) : (
+                        supplier.deletedAt && (
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="cursor-pointer h-9 w-9"
+                            onClick={() => handleRestore(supplier.id)}
+                          >
+                            <RotateCcw />
+                          </Button>
+                        )
+                      )}
                       {isLoadUpdate === supplier.id ? (
                         <ButtonLoading />
-                      ) : isErrUpdate === supplier.id ? (
-                        <ButtonError />
                       ) : (
-                        <Button
-                          size="icon"
-                          className="cursor-pointer bg-cyan-500 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-500 text-white h-9 w-9"
-                          onClick={() => handleEditClick(supplier)}
-                        >
-                          <SquarePen />
-                        </Button>
+                        supplier.deletedAt === null && (
+                          <Button
+                            size="icon"
+                            className="cursor-pointer bg-cyan-500 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-500 text-white h-9 w-9"
+                            onClick={() => handleEditClick(supplier)}
+                          >
+                            <SquarePen />
+                          </Button>
+                        )
                       )}
                       {isLoadDelete === supplier.id ? (
                         <ButtonLoading />
-                      ) : isErrDelete === supplier.id ? (
-                        <ButtonError />
                       ) : (
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="cursor-pointer h-9 w-9"
-                          onClick={() => handleDelete(supplier.id)}
-                        >
-                          <Trash2 />
-                        </Button>
+                        supplier.deletedAt === null && (
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="cursor-pointer h-9 w-9"
+                            onClick={() => handleDelete(supplier.id)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        )
                       )}
                     </div>
                   </TableCell>
@@ -197,9 +237,8 @@ function SupplierForm() {
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <form
-            action="submit"
+            onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
-            onSubmit={editingSupplier ? handleUpdate : handleAdd}
           >
             <div className="flex flex-col gap-2">
               <Label
@@ -212,10 +251,11 @@ function SupplierForm() {
                 className="rounded-lg"
                 type="text"
                 id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
+                {...register("name")}
               />
+              {errors.name && (
+                <p className="text-destructive">{errors.name.message}</p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label
@@ -228,10 +268,11 @@ function SupplierForm() {
                 className="rounded-lg"
                 type="text"
                 id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
+                {...register("phone")}
               />
+              {errors.phone && (
+                <p className="text-destructive">{errors.phone.message}</p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label
@@ -244,10 +285,11 @@ function SupplierForm() {
                 className="rounded-lg"
                 type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-destructive">{errors.email.message}</p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label
@@ -259,14 +301,14 @@ function SupplierForm() {
               <Textarea
                 className="rounded-2xl resize-none"
                 id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
+                {...register("address")}
               />
+              {errors.address && (
+                <p className="text-destructive">{errors.address.message}</p>
+              )}
             </div>
-            {isErr && <p className="text-destructive w-full">{isErr}</p>}
             <CardAction className="w-full flex gap-2 mt-5">
-              {isLoad ||
+              {isLoadAdd ||
               (editingSupplier && isLoadUpdate === editingSupplier.id) ? (
                 <ButtonLoading />
               ) : (

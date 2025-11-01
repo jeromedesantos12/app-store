@@ -77,7 +77,7 @@ function Navbar({
             {token?.role === "admin" && (
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link to="/productForm" className="">
+                  <Link to="/add-product" className="">
                     DASHBOARD
                   </Link>
                 </NavigationMenuLink>
@@ -105,7 +105,7 @@ function Navbar({
               </>
             )}
             {isLoadLog ? (
-              <ButtonLoading />
+              <ButtonLoading className="rounded-full" />
             ) : isErrLog ? (
               <ButtonError />
             ) : token?.role ? (

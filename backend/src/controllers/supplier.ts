@@ -53,6 +53,55 @@ export async function readSuppliers(
   }
 }
 
+export async function readSuppliersAll(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const {
+      sortBy = "createdAt",
+      order = "desc",
+      limit = 10,
+      cursor,
+      search,
+    } = req.query;
+    const take = Number(limit);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search as string, mode: "insensitive" } },
+        { phone: { contains: search as string, mode: "insensitive" } },
+        { email: { contains: search as string, mode: "insensitive" } },
+      ];
+    }
+    const suppliers = await prisma.supplier.findMany({
+      where,
+      orderBy: {
+        [sortBy as string]: order as "asc" | "desc",
+      },
+      take: take + 1,
+      ...(cursor && { cursor: { id: cursor as string }, skip: 1 }),
+    });
+    let nextCursor: string | null = null;
+    if (suppliers.length > take) {
+      const nextItem = suppliers.pop();
+      nextCursor = nextItem!.id;
+    }
+    res.status(200).json({
+      status: "Success",
+      message: "Fetch suppliers success!",
+      data: suppliers,
+      pagination: {
+        nextCursor,
+        hasNextPage: !!nextCursor,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function readSupplier(
   req: Request,
   res: Response,

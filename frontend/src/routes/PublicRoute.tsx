@@ -6,7 +6,7 @@ function PublicRoute({ children }: { children: ReactNode }) {
   const { token } = useAuth();
 
   if (token && token.role === "admin") {
-    return <Navigate to="/productForm" replace />;
+    return <Navigate to="/add-product" replace />;
   }
   if (token && token.role === "customer") {
     return <Navigate to="/product" replace />;

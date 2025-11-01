@@ -75,6 +75,8 @@ function Order({
             {orders.map((order) => {
               const baseURL: string = import.meta.env.VITE_BASE_URL;
               const imageUrl = `${baseURL}/uploads/product/${order.product.image}`;
+
+              console.log(order.product.image);
               return (
                 <TableRow key={order.id}>
                   <TableCell className="flex items-center gap-4">

@@ -128,6 +128,65 @@ export async function readUsers(
   }
 }
 
+export async function readUsersAll(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const {
+      sortBy = "createdAt",
+      order = "desc",
+      limit = 10,
+      cursor,
+      search,
+    } = req.query;
+    const take = Number(limit);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search as string, mode: "insensitive" } },
+        { email: { contains: search as string, mode: "insensitive" } },
+        { role: { contains: search as string, mode: "insensitive" } },
+      ];
+    }
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        profile: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+      where,
+      orderBy: {
+        [sortBy as string]: order as "asc" | "desc",
+      },
+      take: take + 1,
+      ...(cursor && { cursor: { id: cursor as string }, skip: 1 }),
+    });
+    let nextCursor: string | null = null;
+    if (users.length > take) {
+      const nextItem = users.pop();
+      nextCursor = nextItem!.id;
+    }
+    res.status(200).json({
+      status: "Success",
+      message: "Fetch users success!",
+      data: users,
+      pagination: {
+        nextCursor,
+        hasNextPage: !!nextCursor,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function readUser(
   req: Request,
   res: Response,
@@ -278,8 +337,10 @@ export async function restoreUser(
 ) {
   try {
     const { id } = req.params;
+    const existingUser = (req as any).model;
     const user = await prisma.user.update({
       data: {
+        profile: existingUser.profile.split("temp_")[1],
         deletedAt: null,
       },
       where: {
@@ -308,8 +369,10 @@ export async function deleteUser(
 ) {
   try {
     const { id } = req.params;
+    const existingUser = (req as any).model;
     const user = await prisma.user.update({
       data: {
+        profile: "temp_" + existingUser.profile,
         deletedAt: new Date(),
       },
       where: {

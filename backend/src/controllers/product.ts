@@ -69,6 +69,69 @@ export async function readProducts(
   }
 }
 
+export async function readProductsAll(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const {
+      sortBy = "createdAt",
+      order = "desc",
+      limit = 10,
+      cursor,
+      search,
+    } = req.query;
+    const take = Number(limit);
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search as string, mode: "insensitive" } },
+        { category: { contains: search as string, mode: "insensitive" } },
+        {
+          supplier: {
+            name: { contains: search as string, mode: "insensitive" },
+          },
+        },
+      ];
+    }
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: {
+        [sortBy as string]: order as "asc" | "desc",
+      },
+      take: take + 1,
+      ...(cursor && { cursor: { id: cursor as string }, skip: 1 }),
+    });
+    let nextCursor: string | null = null;
+    if (products.length > take) {
+      const nextItem = products.pop();
+      nextCursor = nextItem!.id;
+    }
+    res.status(200).json({
+      status: "Success",
+      message: "Fetch products success!",
+      data: products,
+      pagination: {
+        nextCursor,
+        hasNextPage: !!nextCursor,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function readProduct(
   req: Request,
   res: Response,
@@ -209,8 +272,10 @@ export async function restoreProduct(
 ) {
   try {
     const { id } = req.params;
+    const existingProduct = (req as any).model;
     const product = await prisma.product.update({
       data: {
+        image: existingProduct.image.split("temp_")[1],
         deletedAt: null,
       },
       where: {
@@ -223,7 +288,7 @@ export async function restoreProduct(
         "src",
         "uploads",
         "product",
-        "temp_" + product.image
+        existingProduct.image
       );
       const newPath = resolve("src", "uploads", "product", product.image);
       renameSync(oldPath, newPath);
@@ -245,8 +310,17 @@ export async function deleteProduct(
 ) {
   try {
     const { id } = req.params;
+    const existingProduct = (req as any).model;
+    if (existingProduct.image.startsWith("temp_")) {
+      return res.status(200).json({
+        status: "Success",
+        message: "Product already deleted.",
+        data: existingProduct,
+      });
+    }
     const product = await prisma.product.update({
       data: {
+        image: "temp_" + existingProduct.image,
         deletedAt: new Date(),
       },
       where: {
@@ -255,13 +329,13 @@ export async function deleteProduct(
       },
     });
     if (product && product.image) {
-      const oldPath = resolve("src", "uploads", "product", product.image);
-      const newPath = resolve(
+      const oldPath = resolve(
         "src",
         "uploads",
         "product",
-        "temp_" + product.image
+        existingProduct.image
       );
+      const newPath = resolve("src", "uploads", "product", product.image);
       renameSync(oldPath, newPath);
     }
     res.status(200).json({

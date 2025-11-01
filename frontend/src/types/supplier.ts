@@ -4,4 +4,5 @@ export type SupplierType = {
   phone: string;
   email: string;
   address: string;
+  deletedAt: string | null;
 };

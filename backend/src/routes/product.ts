@@ -7,6 +7,7 @@ import { isExist } from "../middlewares/existing";
 import { isFile, saveFile } from "../middlewares/file";
 import {
   readProducts,
+  readProductsAll,
   readProduct,
   createProduct,
   updateProduct,
@@ -17,6 +18,7 @@ import {
 const router = Router();
 
 router.get("/product", auth, readProducts);
+router.get("/productAll", auth, readProductsAll);
 router.get("/product/:id", auth, readProduct);
 router.post(
   "/product",

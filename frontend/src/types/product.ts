@@ -10,4 +10,5 @@ export type ProductType = {
   reorder: number;
   unit: string;
   warehouse: string;
+  deletedAt: string | null;
 };

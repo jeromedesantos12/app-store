@@ -11,9 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api, extractAxiosError } from "@/services/api";
-import { CheckIcon, ChevronsUpDownIcon, SquarePen, Trash2 } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronsUpDownIcon,
+  RotateCcw,
+  SquarePen,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -29,7 +35,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import ButtonError from "@/components/molecules/ButtonError";
 import type { SupplierType } from "@/types/supplier";
 import {
   Table,
@@ -39,6 +44,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productSchema } from "@/lib/schemas";
+import { z } from "zod";
+import toast from "react-hot-toast";
+import Loading from "@/components/molecules/Loading";
+import Error from "@/components/molecules/Error";
 
 const categories = [
   {
@@ -63,112 +75,120 @@ const units = [
 
 function ProductForm({
   products,
+  suppliers,
+  isLoad,
+  isErr,
   fetchProducts,
+  isLoadSuppliers,
+  isErrSuppliers,
 }: {
   products: ProductType[];
+  suppliers: SupplierType[];
+  isLoad: boolean;
+  isErr: string | null;
   fetchProducts: () => Promise<void>;
+  isLoadSuppliers: boolean;
+  isErrSuppliers: string | null;
 }) {
-  const [image, setImage] = useState<File | null>(null);
-  const [name, setName] = useState("");
-  const [supplierId, setSupplierId] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState(0);
-  const [stock, setStock] = useState(0);
-  const [reorder, setReorder] = useState(0);
-  const [unit, setUnit] = useState("");
-  const [warehouse, setWarehouse] = useState("");
-  const [isLoad, setIsLoad] = useState(false);
-  const [isErr, setIsErr] = useState<string | null>(null);
+  const [isLoadAdd, setIsLoadAdd] = useState<boolean>(false);
   const [isLoadUpdate, setIsLoadUpdate] = useState<string | null>(null);
-  const [isErrUpdate, setIsErrUpdate] = useState<string | null>(null);
+  const [isLoadRestore, setIsLoadRestore] = useState<string | null>(null);
   const [isLoadDelete, setIsLoadDelete] = useState<string | null>(null);
-  const [isErrDelete, setIsErrDelete] = useState<string | null>(null);
-
   const [editingProduct, setEditingProduct] = useState<ProductType | null>(
     null
   );
   const [open, setOpen] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
   const [openUnit, setOpenUnit] = useState(false);
-  const [suppliers, setSuppliers] = useState<SupplierType[]>([]);
 
-  useEffect(() => {
-    async function fetchSuppliers() {
-      try {
-        const res = await api.get("/supplier");
-        setSuppliers(res.data.data);
-      } catch (error) {
-        console.error("Failed to fetch suppliers", error);
-      }
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<z.infer<typeof productSchema>>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      supplierId: "",
+      category: "",
+      description: "",
+      price: 0,
+      stock: 0,
+      reorder: 0,
+      unit: "",
+      warehouse: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof productSchema>) {
+    if (editingProduct) {
+      handleUpdate(values);
+    } else {
+      handleAdd(values);
     }
-    fetchSuppliers();
-  }, []);
+  }
 
-  function handleAdd(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsLoad(true);
+  function handleAdd(values: z.infer<typeof productSchema>) {
+    setIsLoadAdd(true);
     const formData = new FormData();
-    if (image) {
-      formData.append("image", image);
+    formData.append("name", values.name);
+    formData.append("supplierId", values.supplierId);
+    formData.append("category", values.category);
+    formData.append("description", values.description);
+    formData.append("price", values.price.toString());
+    formData.append("stock", values.stock.toString());
+    formData.append("reorder", values.reorder.toString());
+    formData.append("unit", values.unit);
+    formData.append("warehouse", values.warehouse);
+    if (values.image) {
+      formData.append("image", values.image[0]);
     }
-    formData.append("name", name);
-    formData.append("supplierId", supplierId);
-    formData.append("category", category);
-    formData.append("description", description);
-    formData.append("price", price.toString());
-    formData.append("stock", stock.toString());
-    formData.append("reorder", reorder.toString());
-    formData.append("unit", unit);
-    formData.append("warehouse", warehouse || "");
     setTimeout(async () => {
-      setIsLoad(true);
-      setIsErr(null);
       try {
         await api.post("/product", formData, {
           headers: {
-            "Content-Type": "multipart/form-data", // Header ini penting!
+            "Content-Type": "multipart/form-data",
           },
         });
+        toast.success("Product added successfully!");
       } catch (err: unknown) {
-        setIsErr(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
-        setIsLoad(false);
+        handleCancelEdit();
+        setIsLoadAdd(false);
         fetchProducts();
       }
     }, 500);
   }
 
-  function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function handleUpdate(values: z.infer<typeof productSchema>) {
     if (!editingProduct) return;
-
     setIsLoadUpdate(editingProduct.id);
-    setIsErrUpdate(null);
-
     const formData = new FormData();
-    if (image) {
-      formData.append("image", image);
+    formData.append("name", values.name);
+    formData.append("supplierId", values.supplierId);
+    formData.append("category", values.category);
+    formData.append("description", values.description);
+    formData.append("price", values.price.toString());
+    formData.append("stock", values.stock.toString());
+    formData.append("reorder", values.reorder.toString());
+    formData.append("unit", values.unit);
+    formData.append("warehouse", values.warehouse);
+    if (values.image && values.image.length > 0) {
+      formData.append("image", values.image[0]);
     }
-    formData.append("name", name);
-    formData.append("supplierId", supplierId);
-    formData.append("category", category);
-    formData.append("description", description);
-    formData.append("price", price.toString());
-    formData.append("stock", stock.toString());
-    formData.append("reorder", reorder.toString());
-    formData.append("unit", unit);
-    formData.append("warehouse", warehouse || "");
-
     setTimeout(async () => {
       try {
         await api.put(`/product/${editingProduct.id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        handleCancelEdit();
+        toast.success("Product updated successfully!");
       } catch (err: unknown) {
-        setIsErrUpdate(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
+        handleCancelEdit();
         setIsLoadUpdate(null);
         fetchProducts();
       }
@@ -177,28 +197,18 @@ function ProductForm({
 
   function handleEditClick(product: ProductType) {
     setEditingProduct(product);
-    setName(product.name);
-    setSupplierId(product.supplierId);
-    setCategory(product.category);
-    setDescription(product.description);
-    setPrice(product.price);
-    setStock(product.stock);
-    setReorder(product.reorder);
-    setUnit(product.unit);
-    setWarehouse(product.warehouse || "");
-    setImage(null);
-    setIsErr(null);
+    reset(product);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleDelete(id: string) {
     setIsLoadDelete(id);
-    setIsErrDelete(null);
     setTimeout(async () => {
       try {
         await api.delete(`/product/${id}`);
+        toast.success("Product deleted successfully!");
       } catch (err: unknown) {
-        setIsErrDelete(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setIsLoadDelete(null);
         fetchProducts();
@@ -206,19 +216,24 @@ function ProductForm({
     }, 500);
   }
 
+  function handleRestore(id: string) {
+    setIsLoadRestore(id);
+    setTimeout(async () => {
+      try {
+        await api.patch(`/product/${id}/restore`);
+        toast.success("Product restored successfully!");
+      } catch (err: unknown) {
+        toast.error(extractAxiosError(err));
+      } finally {
+        setIsLoadRestore(null);
+        fetchProducts();
+      }
+    }, 500);
+  }
+
   function handleCancelEdit() {
     setEditingProduct(null);
-    setName("");
-    setSupplierId("");
-    setCategory("");
-    setDescription("");
-    setPrice(0);
-    setStock(0);
-    setReorder(0);
-    setUnit("");
-    setWarehouse("");
-    setImage(null);
-    setIsErr(null);
+    reset();
   }
 
   return (
@@ -233,10 +248,15 @@ function ProductForm({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.length > 0 ? (
+            {isLoad ? (
+              <Loading />
+            ) : isErr ? (
+              <Error error={isErr} />
+            ) : products.length > 0 ? (
               products.map((product) => {
                 const baseURL: string = import.meta.env.VITE_BASE_URL;
                 const imageUrl = `${baseURL}/uploads/product/${product.image}`;
+                console.log(imageUrl);
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
@@ -251,32 +271,46 @@ function ProductForm({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
-                        {isLoadUpdate === product.id ? (
-                          <ButtonLoading />
-                        ) : isErrUpdate === product.id ? (
-                          <ButtonError />
+                        {isLoadRestore === product.id ? (
+                          <ButtonLoading className="w-9 h-9" />
                         ) : (
-                          <Button
-                            size="icon"
-                            className="cursor-pointer bg-cyan-500 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-500 text-white h-9 w-9"
-                            onClick={() => handleEditClick(product)}
-                          >
-                            <SquarePen />
-                          </Button>
+                          product.deletedAt && (
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="cursor-pointer h-9 w-9"
+                              onClick={() => handleRestore(product.id)}
+                            >
+                              <RotateCcw />
+                            </Button>
+                          )
+                        )}
+                        {isLoadUpdate === product.id ? (
+                          <ButtonLoading className="w-9 h-9" />
+                        ) : (
+                          product.deletedAt === null && (
+                            <Button
+                              size="icon"
+                              className="cursor-pointer bg-cyan-500 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-500 text-white h-9 w-9"
+                              onClick={() => handleEditClick(product)}
+                            >
+                              <SquarePen />
+                            </Button>
+                          )
                         )}
                         {isLoadDelete === product.id ? (
-                          <ButtonLoading />
-                        ) : isErrDelete === product.id ? (
-                          <ButtonError />
+                          <ButtonLoading className="w-9 h-9" />
                         ) : (
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="cursor-pointer h-9 w-9"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 />
-                          </Button>
+                          product.deletedAt === null && (
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="cursor-pointer h-9 w-9"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          )
                         )}
                       </div>
                     </TableCell>
@@ -304,9 +338,8 @@ function ProductForm({
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <form
-            action="submit"
+            onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
-            onSubmit={editingProduct ? handleUpdate : handleAdd}
           >
             <div className="flex flex-col gap-2">
               <Label
@@ -319,9 +352,13 @@ function ProductForm({
                 className="rounded-lg"
                 type="file"
                 id="image"
-                onChange={(e) => e.target.files && setImage(e.target.files[0])}
-                required={!editingProduct}
+                {...register("image")}
               />
+              {errors.image && (
+                <p className="text-destructive">
+                  {errors.image.message as string}
+                </p>
+              )}
             </div>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex flex-col gap-2 w-full">
@@ -335,10 +372,13 @@ function ProductForm({
                   className="rounded-lg"
                   type="text"
                   id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
+                  {...register("name")}
                 />
+                {errors.name && (
+                  <p className="text-destructive">
+                    {errors.name.message as string}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2 w-full">
                 <Label
@@ -347,56 +387,64 @@ function ProductForm({
                 >
                   Category
                 </Label>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={open}
-                      className="w-full rounded-lg justify-between"
-                    >
-                      {category
-                        ? categories.find((cat) => cat.category === category)
-                            ?.label
-                        : "Select category..."}
-                      <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Search category..." />
-                      <CommandList>
-                        <CommandEmpty>No category found.</CommandEmpty>
-                        <CommandGroup>
-                          {categories.map((cat) => (
-                            <CommandItem
-                              key={cat.category}
-                              value={cat.category}
-                              onSelect={(currentcategory) => {
-                                setCategory(
-                                  currentcategory === category
-                                    ? ""
-                                    : currentcategory
-                                );
-                                setOpen(false);
-                              }}
-                            >
-                              <CheckIcon
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  category === cat.category
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {cat.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Controller
+                  control={control}
+                  name="category"
+                  render={({ field }) => (
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full rounded-lg justify-between"
+                        >
+                          {field.value
+                            ? categories.find(
+                                (cat) => cat.category === field.value
+                              )?.label
+                            : "Select category..."}
+                          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search category..." />
+                          <CommandList>
+                            <CommandEmpty>No category found.</CommandEmpty>
+                            <CommandGroup>
+                              {categories.map((cat) => (
+                                <CommandItem
+                                  key={cat.category}
+                                  value={cat.category}
+                                  onSelect={(currentcategory) => {
+                                    field.onChange(currentcategory);
+                                    setOpen(false);
+                                  }}
+                                >
+                                  <CheckIcon
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === cat.category
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {cat.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.category && (
+                  <p className="text-destructive">
+                    {errors.category.message as string}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -406,53 +454,71 @@ function ProductForm({
               >
                 Supplier
               </Label>
-              <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openSupplier}
-                    className="w-full rounded-lg justify-between"
-                  >
-                    {supplierId
-                      ? suppliers.find((sup) => sup.id === supplierId)?.name
-                      : "Select supplier..."}
-                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search supplier..." />
-                    <CommandList>
-                      <CommandEmpty>No supplier found.</CommandEmpty>
-                      <CommandGroup>
-                        {suppliers.map((sup) => (
-                          <CommandItem
-                            key={sup.id}
-                            value={sup.id}
-                            onSelect={(currentValue) => {
-                              setSupplierId(
-                                currentValue === supplierId ? "" : currentValue
-                              );
-                              setOpenSupplier(false);
-                            }}
-                          >
-                            <CheckIcon
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                supplierId === sup.id
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {sup.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Controller
+                control={control}
+                name="supplierId"
+                render={({ field }) => (
+                  <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openSupplier}
+                        className="w-full rounded-lg justify-between"
+                        disabled={isLoadSuppliers || isErrSuppliers !== null}
+                      >
+                        {isLoadSuppliers
+                          ? "Loading suppliers..."
+                          : isErrSuppliers
+                          ? "Error loading suppliers"
+                          : field.value
+                          ? suppliers.find((sup) => sup.id === field.value)
+                              ?.name
+                          : "Select supplier..."}
+                        <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search supplier..." />
+                        <CommandList>
+                          <CommandEmpty>No supplier found.</CommandEmpty>
+                          <CommandGroup>
+                            {suppliers.map((sup) => (
+                              <CommandItem
+                                key={sup.id}
+                                value={sup.id}
+                                onSelect={(currentValue) => {
+                                  field.onChange(currentValue);
+                                  setOpenSupplier(false);
+                                }}
+                              >
+                                <CheckIcon
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === sup.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {sup.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+              {isErrSuppliers && (
+                <p className="text-sm text-destructive">{isErrSuppliers}</p>
+              )}
+              {errors.supplierId && (
+                <p className="text-destructive">
+                  {errors.supplierId.message as string}
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label
@@ -464,10 +530,13 @@ function ProductForm({
               <Textarea
                 className="rounded-2xl resize-none"
                 id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
+                {...register("description")}
               />
+              {errors.description && (
+                <p className="text-destructive">
+                  {errors.description.message as string}
+                </p>
+              )}
             </div>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex flex-col gap-2 w-full">
@@ -481,10 +550,13 @@ function ProductForm({
                   className="rounded-lg"
                   type="number"
                   id="price"
-                  value={price}
-                  onChange={(e) => setPrice(parseInt(e.target.value))}
-                  required
+                  {...register("price", { valueAsNumber: true })}
                 />
+                {errors.price && (
+                  <p className="text-destructive">
+                    {errors.price.message as string}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2 w-full">
                 <Label
@@ -497,10 +569,13 @@ function ProductForm({
                   className="rounded-lg"
                   type="number"
                   id="stock"
-                  value={stock}
-                  onChange={(e) => setStock(parseInt(e.target.value))}
-                  required
+                  {...register("stock", { valueAsNumber: true })}
                 />
+                {errors.stock && (
+                  <p className="text-destructive">
+                    {errors.stock.message as string}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-col md:flex-row gap-4">
@@ -515,10 +590,13 @@ function ProductForm({
                   className="rounded-lg"
                   type="number"
                   id="reorder"
-                  value={reorder}
-                  onChange={(e) => setReorder(parseInt(e.target.value))}
-                  required
+                  {...register("reorder", { valueAsNumber: true })}
                 />
+                {errors.reorder && (
+                  <p className="text-destructive">
+                    {errors.reorder.message as string}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2 w-full">
                 <Label
@@ -527,51 +605,62 @@ function ProductForm({
                 >
                   Unit
                 </Label>
-                <Popover open={openUnit} onOpenChange={setOpenUnit}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openUnit}
-                      className="w-full rounded-lg justify-between"
-                    >
-                      {unit
-                        ? units.find((u) => u.value === unit)?.label
-                        : "Select unit..."}
-                      <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Search unit..." />
-                      <CommandList>
-                        <CommandEmpty>No unit found.</CommandEmpty>
-                        <CommandGroup>
-                          {units.map((u) => (
-                            <CommandItem
-                              key={u.value}
-                              value={u.value}
-                              onSelect={(currentValue) => {
-                                setUnit(
-                                  currentValue === unit ? "" : currentValue
-                                );
-                                setOpenUnit(false);
-                              }}
-                            >
-                              <CheckIcon
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  unit === u.value ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {u.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Controller
+                  control={control}
+                  name="unit"
+                  render={({ field }) => (
+                    <Popover open={openUnit} onOpenChange={setOpenUnit}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openUnit}
+                          className="w-full rounded-lg justify-between"
+                        >
+                          {field.value
+                            ? units.find((u) => u.value === field.value)?.label
+                            : "Select unit..."}
+                          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search unit..." />
+                          <CommandList>
+                            <CommandEmpty>No unit found.</CommandEmpty>
+                            <CommandGroup>
+                              {units.map((u) => (
+                                <CommandItem
+                                  key={u.value}
+                                  value={u.value}
+                                  onSelect={(currentValue) => {
+                                    field.onChange(currentValue);
+                                    setOpenUnit(false);
+                                  }}
+                                >
+                                  <CheckIcon
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === u.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {u.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.unit && (
+                  <p className="text-destructive">
+                    {errors.unit.message as string}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2 w-full">
@@ -585,15 +674,18 @@ function ProductForm({
                 className="rounded-lg"
                 type="text"
                 id="warehouse"
-                value={warehouse}
-                onChange={(e) => setWarehouse(e.target.value)}
+                {...register("warehouse")}
               />
+              {errors.warehouse && (
+                <p className="text-destructive">
+                  {errors.warehouse.message as string}
+                </p>
+              )}
             </div>
-            {isErr && <p className="text-destructive w-full">{isErr}</p>}
             <CardAction className="w-full flex gap-2 mt-5">
-              {isLoad ||
+              {isLoadAdd ||
               (editingProduct && isLoadUpdate === editingProduct.id) ? (
-                <ButtonLoading />
+                <ButtonLoading className="flex-1" />
               ) : (
                 <>
                   {editingProduct && (

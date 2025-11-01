@@ -27,25 +27,37 @@ import SupplierForm from "./pages/SupplierForm";
 import ProductSupplierLayout from "./components/molecules/ProductSupplier";
 import { Toaster } from "react-hot-toast";
 import "./App.css";
+import type { SupplierType } from "./types/supplier";
 
 function App() {
   const [carts, setCarts] = useState<CartType[]>([]);
+  const [orders, setOrders] = useState<OrderType[]>([]);
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [productsAll, setProductsAll] = useState<ProductType[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierType[]>([]);
+  const [suppliersAll, setSuppliersAll] = useState<SupplierType[]>([]);
   const [filterProducts, setFilterProducts] = useState<ProductType[]>([]);
   const [isLoadProducts, setIsLoadProducts] = useState(false);
   const [isErrProducts, setIsErrProducts] = useState<string | null>(null);
+  const [isLoadProductsAll, setIsLoadProductsAll] = useState(false);
+  const [isErrProductsAll, setIsErrProductsAll] = useState<string | null>(null);
   const [isLoadFilterProducts, setIsLoadFilterProducts] = useState(false);
   const [isErrFilterProducts, setIsErrFilterProducts] = useState<string | null>(
     null
   );
   const [isLoadCarts, setIsLoadCarts] = useState(false);
   const [isErrCarts, setIsErrCarts] = useState<string | null>(null);
-  const [orders, setOrders] = useState<OrderType[]>([]);
   const [isLoadOrders, setIsLoadOrders] = useState(false);
   const [isErrOrders, setIsErrOrders] = useState<string | null>(null);
+  const [isLoadSuppliers, setIsLoadSuppliers] = useState(false);
+  const [isErrSuppliers, setIsErrSuppliers] = useState<string | null>(null);
+  const [isLoadSuppliersAll, setIsLoadSuppliersAll] = useState(false);
+  const [isErrSuppliersAll, setIsErrSuppliersAll] = useState<string | null>(
+    null
+  );
   const [search, setSearch] = useState<string>("");
-  const debouncedSearch = useDebounce<string>(search, 500);
   const [nav, setNav] = useState(false);
+  const debouncedSearch = useDebounce<string>(search, 500);
 
   async function fetchFilterProducts(search: string = "") {
     try {
@@ -77,6 +89,19 @@ function App() {
     }
   }
 
+  async function fetchProductsAll() {
+    try {
+      setIsLoadProductsAll(true);
+      const res = await api.get("/productAll");
+      setProductsAll(res.data.data);
+      setIsErrProductsAll(null);
+    } catch (err) {
+      setIsErrProductsAll(extractAxiosError(err));
+    } finally {
+      setIsLoadProductsAll(false);
+    }
+  }
+
   async function fetchCarts() {
     try {
       setIsLoadCarts(true);
@@ -103,10 +128,39 @@ function App() {
     }
   }
 
+  async function fetchSuppliers() {
+    try {
+      setIsLoadSuppliers(true);
+      const res = await api.get("/supplier");
+      setSuppliers(res.data.data);
+      setIsErrSuppliers(null);
+    } catch (err) {
+      setIsErrSuppliers(extractAxiosError(err));
+    } finally {
+      setIsLoadSuppliers(false);
+    }
+  }
+
+  async function fetchSuppliersAll() {
+    try {
+      setIsLoadSuppliersAll(true);
+      const res = await api.get("/supplierAll");
+      setSuppliersAll(res.data.data);
+      setIsErrSuppliersAll(null);
+    } catch (err) {
+      setIsErrSuppliersAll(extractAxiosError(err));
+    } finally {
+      setIsLoadSuppliersAll(false);
+    }
+  }
+
   useEffect(() => {
     fetchProducts();
+    fetchProductsAll();
     fetchCarts();
     fetchOrders();
+    fetchSuppliers();
+    fetchSuppliersAll();
   }, []);
 
   useEffect(() => {
@@ -188,15 +242,30 @@ function App() {
                 }
               >
                 <Route
-                  path="/productForm"
+                  path="/add-product"
                   element={
                     <ProductForm
-                      products={products}
-                      fetchProducts={fetchProducts}
+                      products={productsAll}
+                      suppliers={suppliers}
+                      isLoad={isLoadProductsAll}
+                      isErr={isErrProductsAll}
+                      fetchProducts={fetchProductsAll}
+                      isLoadSuppliers={isLoadSuppliers}
+                      isErrSuppliers={isErrSuppliers}
                     />
                   }
                 />
-                <Route path="/supplierForm" element={<SupplierForm />} />
+                <Route
+                  path="/add-supplier"
+                  element={
+                    <SupplierForm
+                      suppliers={suppliersAll}
+                      isLoad={isLoadSuppliersAll}
+                      isErr={isErrSuppliersAll}
+                      fetchSuppliers={fetchSuppliersAll}
+                    />
+                  }
+                />
               </Route>
               <Route
                 element={
