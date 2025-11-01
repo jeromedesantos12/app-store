@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Loading from "@/components/molecules/Loading";
 import Error from "@/components/molecules/Error";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import ButtonError from "@/components/molecules/ButtonError";
+import toast from "react-hot-toast";
 
 function ProductDetail({
   products,
@@ -31,27 +31,27 @@ function ProductDetail({
   );
   const [qty, setQty] = useState(0);
   const [isLoadAdd, setIsLoadAdd] = useState<string | null>(null);
-  const [isErrAdd, setIsErrAdd] = useState<string | null>(null);
   const baseURL: string = import.meta.env.VITE_BASE_URL;
   const imageUrl = `${baseURL}/uploads/product/${product?.image}`;
 
   function handleAdd(id: string) {
     setIsLoadAdd(id);
-    setIsErrAdd(null);
     setTimeout(async () => {
       try {
         await api.post("/cart", {
           productId: id,
           qty,
         });
+        toast.success("Product added to cart!");
       } catch (err: unknown) {
-        setIsErrAdd(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
+      } finally {
+        setQty(0);
+        setIsLoadAdd(null);
+        fetchProducts();
+        fetchFilterProducts();
+        fetchCarts();
       }
-      setQty(0);
-      setIsLoadAdd(null);
-      fetchProducts();
-      fetchFilterProducts();
-      fetchCarts();
     }, 500);
   }
 
@@ -119,8 +119,6 @@ function ProductDetail({
                 </div>
                 {isLoadAdd === product.id ? (
                   <ButtonLoading />
-                ) : isErrAdd ? (
-                  <ButtonError />
                 ) : (
                   <Button
                     variant={

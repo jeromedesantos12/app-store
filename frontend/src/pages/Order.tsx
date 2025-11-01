@@ -14,7 +14,7 @@ import Error from "@/components/molecules/Error";
 import Empty from "@/components/molecules/Empty";
 import { useState } from "react";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import ButtonError from "@/components/molecules/ButtonError";
+import toast from "react-hot-toast";
 
 function Order({
   orders,
@@ -32,16 +32,15 @@ function Order({
   fetchOrders: () => Promise<void>;
 }) {
   const [isLoadCancel, setIsLoadCancel] = useState<string | null>(null);
-  const [isErrCancel, setIsErrCancel] = useState<string | null>(null);
 
   async function handleCancel(id: string) {
     setIsLoadCancel(id);
-    setIsErrCancel(null);
     setTimeout(async () => {
       try {
         await api.delete(`/order/${id}/status`);
+        toast.success("Order cancelled!");
       } catch (err: unknown) {
-        setIsErrCancel(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setIsLoadCancel(null);
         fetchProducts();
@@ -93,8 +92,6 @@ function Order({
                     {order.status === "pending" &&
                       (isLoadCancel === order.id ? (
                         <ButtonLoading />
-                      ) : isErrCancel === order.id ? (
-                        <ButtonError />
                       ) : (
                         <Button
                           variant="destructive"

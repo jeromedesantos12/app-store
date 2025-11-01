@@ -14,10 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
 import { useAuth } from "@/hooks/useAuth";
-import toast from "react-hot-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 const loginSchema = z.object({
   emailOrUsername: z
@@ -64,7 +64,7 @@ function Login({
           emailOrUsername: data.emailOrUsername,
           password: data.password,
         });
-        fetchToken();
+        toast.success("Login successful!");
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {

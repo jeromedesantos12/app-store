@@ -7,8 +7,8 @@ import Loading from "@/components/molecules/Loading";
 import Error from "@/components/molecules/Error";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
 import { api, extractAxiosError } from "@/services/api";
-import ButtonError from "@/components/molecules/ButtonError";
 import Empty from "@/components/molecules/Empty";
+import toast from "react-hot-toast";
 
 function Cart({
   carts,
@@ -28,22 +28,19 @@ function Cart({
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
   const [editingQty, setEditingQty] = useState(1);
   const [isLoadUpdate, setIsLoadUpdate] = useState<string | null>(null);
-  const [isErrUpdate, setIsErrUpdate] = useState<string | null>(null);
   const [isLoadDelete, setIsLoadDelete] = useState<string | null>(null);
-  const [isErrDelete, setIsErrDelete] = useState<string | null>(null);
   const [isLoadCheckout, setIsLoadCheckout] = useState<boolean | null>(false);
-  const [isErrCheckout, setIsErrCheckout] = useState<string | null>(null);
 
   function handleUpdate(id: string, qty: number) {
     setIsLoadUpdate(id);
-    setIsErrUpdate(null);
     setTimeout(async () => {
       try {
         await api.put(`/cart/${id}`, {
           qty,
         });
+        toast.success("Update successful!");
       } catch (err: unknown) {
-        setIsErrUpdate(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setEditingQty(0);
         setEditingCartId(null);
@@ -56,12 +53,12 @@ function Cart({
 
   function handleDelete(id: string) {
     setIsLoadDelete(id);
-    setIsErrDelete(null);
     setTimeout(async () => {
       try {
         await api.delete(`/cart/${id}`);
+        toast.success("Delete successful!");
       } catch (err: unknown) {
-        setIsErrDelete(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setIsLoadDelete(null);
         fetchCarts();
@@ -72,12 +69,12 @@ function Cart({
 
   function handleCheckout() {
     setIsLoadCheckout(true);
-    setIsErrDelete(null);
     setTimeout(async () => {
       try {
         await api.post("/order");
+        toast.success("Product Checkout!");
       } catch (err: unknown) {
-        setIsErrCheckout(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
         setIsLoadCheckout(false);
         fetchCarts();
@@ -176,8 +173,6 @@ function Cart({
                   {editingCartId === cart.id ? (
                     isLoadUpdate === cart.id ? (
                       <ButtonLoading />
-                    ) : isErrUpdate ? (
-                      <ButtonError />
                     ) : (
                       <Button
                         size="icon"
@@ -202,8 +197,6 @@ function Cart({
                   )}
                   {isLoadDelete === cart.id ? (
                     <ButtonLoading />
-                  ) : isErrDelete ? (
-                    <ButtonError />
                   ) : (
                     <Button
                       variant="destructive"
@@ -223,8 +216,6 @@ function Cart({
       {carts.length > 0 &&
         (isLoadCheckout ? (
           <ButtonLoading />
-        ) : isErrCheckout ? (
-          <ButtonError />
         ) : (
           <Button className="cursor-pointer" onClick={handleCheckout}>
             Checkout

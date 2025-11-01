@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -47,7 +46,6 @@ const registerSchema = z.object({
 
 function Register() {
   const navigate = useNavigate();
-  const { fetchToken } = useAuth();
   const [isLoadLog, setIsLoadLog] = useState(false);
 
   const {
@@ -80,20 +78,18 @@ function Register() {
         if (data.profile && data.profile[0]) {
           formData.append("profile", data.profile[0]);
         }
-
         await api.post("/register", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
         toast.success("Registration successful!");
-        fetchToken();
-        navigate("/product");
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {
-        setIsLoadLog(false);
         reset();
+        setIsLoadLog(false);
+        navigate("/product");
       }
     }, 500);
   }
