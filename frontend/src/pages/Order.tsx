@@ -20,12 +20,14 @@ function Order({
   orders,
   isLoad,
   isErr,
+  fetchProducts,
   fetchCarts,
   fetchOrders,
 }: {
   orders: OrderType[];
   isLoad: boolean;
   isErr: string | null;
+  fetchProducts: () => Promise<void>;
   fetchCarts: () => Promise<void>;
   fetchOrders: () => Promise<void>;
 }) {
@@ -42,6 +44,7 @@ function Order({
         setIsErrCancel(extractAxiosError(err));
       } finally {
         setIsLoadCancel(null);
+        fetchProducts();
         fetchCarts();
         fetchOrders();
       }

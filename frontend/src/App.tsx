@@ -22,10 +22,11 @@ import Register from "./pages/Register";
 import Order from "./pages/Order";
 import ProductOrderLayout from "./components/molecules/CartOrder";
 import type { OrderType } from "./types/order";
-import "./App.css";
 import { CustomerRoute } from "./routes/CustomerRoute";
 import SupplierForm from "./pages/SupplierForm";
 import ProductSupplierLayout from "./components/molecules/ProductSupplier";
+import { Toaster } from "react-hot-toast";
+import "./App.css";
 
 function App() {
   const [carts, setCarts] = useState<CartType[]>([]);
@@ -116,6 +117,7 @@ function App() {
     <div onClick={() => setNav(false)}>
       <AuthProvider>
         <BrowserRouter>
+          <Toaster position="top-center" />
           <Navbar nav={nav} setNav={setNav} carts={carts.length} />
           <div className="dark:bg-zinc-950 w-full font-inter flex flex-col items-center min-h-screen mt-10 px-20">
             <Routes>
@@ -124,7 +126,12 @@ function App() {
                 path="/login"
                 element={
                   <PublicRoute>
-                    <Login />
+                    <Login
+                      fetchProducts={fetchProducts}
+                      fetchFilterProducts={fetchFilterProducts}
+                      fetchCarts={fetchCarts}
+                      fetchOrders={fetchOrders}
+                    />
                   </PublicRoute>
                 }
               />
@@ -186,7 +193,6 @@ function App() {
                     <ProductForm
                       products={products}
                       fetchProducts={fetchProducts}
-                      fetchFilterProducts={fetchFilterProducts}
                     />
                   }
                 />
@@ -221,6 +227,7 @@ function App() {
                       orders={orders}
                       isLoad={isLoadOrders}
                       isErr={isErrOrders}
+                      fetchProducts={fetchProducts}
                       fetchCarts={fetchCarts}
                       fetchOrders={fetchOrders}
                     />

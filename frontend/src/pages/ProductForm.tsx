@@ -64,11 +64,9 @@ const units = [
 function ProductForm({
   products,
   fetchProducts,
-  fetchFilterProducts,
 }: {
   products: ProductType[];
   fetchProducts: () => Promise<void>;
-  fetchFilterProducts: () => Promise<void>;
 }) {
   const [image, setImage] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -137,7 +135,6 @@ function ProductForm({
       } finally {
         setIsLoad(false);
         fetchProducts();
-        fetchFilterProducts();
       }
     }, 500);
   }
@@ -174,7 +171,6 @@ function ProductForm({
       } finally {
         setIsLoadUpdate(null);
         fetchProducts();
-        fetchFilterProducts();
       }
     }, 500);
   }
@@ -206,7 +202,6 @@ function ProductForm({
       } finally {
         setIsLoadDelete(null);
         fetchProducts();
-        fetchFilterProducts();
       }
     }, 500);
   }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api, extractAxiosError } from "@/services/api";
 import {
   Card,
@@ -14,32 +14,67 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
 import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-function Login() {
-  const navigate = useNavigate();
+const loginSchema = z.object({
+  emailOrUsername: z
+    .string()
+    .min(3, "Email or Username must be at least 3 characters")
+    .max(100, "Email or Username must be at most 100 characters"),
+  password: z
+    .string()
+    .min(10, "Password must be at least 10 characters")
+    .max(255, "Password must be at most 255 characters"),
+});
+
+function Login({
+  fetchProducts,
+  fetchFilterProducts,
+  fetchCarts,
+  fetchOrders,
+}: {
+  fetchProducts: () => Promise<void>;
+  fetchFilterProducts: () => Promise<void>;
+  fetchCarts: () => Promise<void>;
+  fetchOrders: () => Promise<void>;
+}) {
   const { fetchToken } = useAuth();
-  const [emailOrUsername, setEmailOrUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoadLog, setIsLoadLog] = useState(false);
-  const [isErrLog, setIsErrLog] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      emailOrUsername: "",
+      password: "",
+    },
+  });
 
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function onSubmit(data: z.infer<typeof loginSchema>) {
     setIsLoadLog(true);
-    setIsErrLog(null);
     setTimeout(async () => {
       try {
         await api.post("/login", {
-          emailOrUsername,
-          password,
+          emailOrUsername: data.emailOrUsername,
+          password: data.password,
         });
         fetchToken();
       } catch (err: unknown) {
-        setIsErrLog(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
+        reset();
         setIsLoadLog(false);
+        fetchProducts();
+        fetchFilterProducts();
+        fetchCarts();
+        fetchOrders();
         fetchToken();
-        navigate("/");
       }
     }, 500);
   }
@@ -64,7 +99,7 @@ function Login() {
           <form
             action="submit"
             className="flex flex-col gap-5"
-            onSubmit={handleLogin}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-col gap-2">
               <Label
@@ -77,10 +112,14 @@ function Login() {
                 className="rounded-lg"
                 type="text"
                 id="emailOrUsername"
-                value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.target.value)}
+                {...register("emailOrUsername")}
                 required
               />
+              {errors.emailOrUsername && (
+                <p className="text-red-500 text-sm">
+                  {errors.emailOrUsername.message}
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label
@@ -93,12 +132,15 @@ function Login() {
                 className="rounded-lg"
                 type="password"
                 id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register("password")}
                 required
               />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
-            {isErrLog && <p className="text-destructive w-full">{isErrLog}</p>}
             <CardAction className="w-full flex flex-col gap-2 mt-5">
               {isLoadLog ? (
                 <ButtonLoading />

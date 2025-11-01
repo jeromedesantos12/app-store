@@ -15,42 +15,85 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
 import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const registerSchema = z.object({
+  profile: z.any().optional(), // Joi.string().allow("") translates to optional any for file
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50, "Username must be at most 50 characters"),
+  name: z
+    .string()
+    .min(3, "Name must be at least 3 characters")
+    .max(100, "Name must be at most 100 characters"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .min(10, "Email must be at least 10 characters")
+    .max(255, "Email must be at most 255 characters"),
+  address: z
+    .string()
+    .max(255, "Address must be at most 255 characters")
+    .optional(), // min(0) and required() is tricky, optional() allows empty string
+  password: z
+    .string()
+    .min(10, "Password must be at least 10 characters")
+    .max(255, "Password must be at most 255 characters"),
+});
 
 function Register() {
   const navigate = useNavigate();
   const { fetchToken } = useAuth();
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState<File | string>("");
   const [isLoadLog, setIsLoadLog] = useState(false);
-  const [isErrLog, setIsErrLog] = useState<string | null>(null);
 
-  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: "",
+      name: "",
+      email: "",
+      address: "",
+      password: "",
+      profile: undefined, // File input
+    },
+  });
+
+  async function onSubmit(data: z.infer<typeof registerSchema>) {
     setIsLoadLog(true);
-    setIsErrLog(null);
     setTimeout(async () => {
       try {
         const formData = new FormData();
-        const data = { username, name, email, address, password };
-        Object.entries(data).forEach(([key, value]) =>
-          formData.append(key, value)
-        );
-        formData.append("profile", profile);
+        formData.append("username", data.username);
+        formData.append("name", data.name);
+        formData.append("email", data.email);
+        formData.append("address", data.address || ""); // address is optional
+        formData.append("password", data.password);
+        if (data.profile && data.profile[0]) {
+          formData.append("profile", data.profile[0]);
+        }
+
         await api.post("/register", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-      } catch (err: unknown) {
-        setIsErrLog(extractAxiosError(err));
-      } finally {
-        setIsLoadLog(false);
+        toast.success("Registration successful!");
         fetchToken();
         navigate("/product");
+      } catch (err: unknown) {
+        toast.error(extractAxiosError(err));
+      } finally {
+        setIsLoadLog(false);
+        reset();
       }
     }, 500);
   }
@@ -75,7 +118,7 @@ function Register() {
           <form
             action="submit"
             className="flex flex-col gap-5"
-            onSubmit={handleRegister}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-col gap-2">
               <Label
@@ -88,14 +131,19 @@ function Register() {
                 className="rounded-lg"
                 type="file"
                 id="profile"
-                onChange={(e) => setProfile(e.target.files?.[0] || "")}
+                {...register("profile")}
                 required
               />
+              {errors.profile && (
+                <p className="text-red-500 text-sm">
+                  {errors.profile.message as React.ReactNode}
+                </p>
+              )}
             </div>
             <div className="flex gap-4">
               <div className="flex flex-col gap-2">
                 <Label
-                  htmlFor="name"
+                  htmlFor="username"
                   className="text-cyan-700 dark:text-zinc-300"
                 >
                   Username
@@ -104,10 +152,14 @@ function Register() {
                   className="rounded-lg"
                   type="text"
                   id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  {...register("username")}
                   required
                 />
+                {errors.username && (
+                  <p className="text-red-500 text-sm">
+                    {errors.username.message as React.ReactNode}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label
@@ -120,10 +172,14 @@ function Register() {
                   className="rounded-lg"
                   type="text"
                   id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  {...register("name")}
                   required
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-sm">
+                    {errors.name.message as React.ReactNode}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex gap-4">
@@ -138,10 +194,14 @@ function Register() {
                   className="rounded-lg"
                   type="text"
                   id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email")}
                   required
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-sm">
+                    {errors.email.message as React.ReactNode}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label
@@ -152,12 +212,16 @@ function Register() {
                 </Label>
                 <Input
                   className="rounded-lg"
-                  type="text"
+                  type="password"
                   id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                   required
                 />
+                {errors.password && (
+                  <p className="text-red-500 text-sm">
+                    {errors.password.message as React.ReactNode}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -170,12 +234,15 @@ function Register() {
               <Textarea
                 className="rounded-lg h-20"
                 id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                {...register("address")}
                 required
               />
+              {errors.address && (
+                <p className="text-red-500 text-sm">
+                  {errors.address.message as React.ReactNode}
+                </p>
+              )}
             </div>
-            {isErrLog && <p className="text-destructive w-full">{isErrLog}</p>}
             <CardAction className="w-full flex flex-col gap-2 mt-5">
               {isLoadLog ? (
                 <ButtonLoading />
