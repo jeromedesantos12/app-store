@@ -199,6 +199,10 @@ function App() {
                 element={
                   <PublicRoute>
                     <Login
+                      fetchProductsAll={fetchProductsAll}
+                      fetchSuppliersAll={fetchSuppliersAll}
+                      fetchOrdersAll={fetchOrdersAll}
+                      fetchSuppliers={fetchSuppliers}
                       fetchProducts={fetchProducts}
                       fetchFilterProducts={fetchFilterProducts}
                       fetchCarts={fetchCarts}

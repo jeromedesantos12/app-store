@@ -4,7 +4,7 @@ import { orderSchema } from "../utils/joi";
 import { validate } from "../middlewares/validate";
 import { isExist } from "../middlewares/existing";
 import {
-  readAllOrders,
+  readOrdersAll,
   readOrders,
   readOrderById,
   createOrder,
@@ -14,7 +14,7 @@ import {
 
 const router = Router();
 
-router.get("/order/all", auth, isAdmin, readAllOrders);
+router.get("/order/all", auth, isAdmin, readOrdersAll);
 router.get("/order/me", auth, isCustomer, readOrders);
 router.get("/order/:id", auth, isCustomer, readOrderById);
 router.post("/order", auth, isCustomer, createOrder);

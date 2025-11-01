@@ -83,7 +83,13 @@ function SupplierForm({
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {
-        handleCancelEdit();
+        setEditingSupplier(null);
+        reset({
+          name: "",
+          phone: "",
+          email: "",
+          address: "",
+        });
         setIsLoadAdd(false);
         fetchSuppliers();
       }
@@ -100,7 +106,13 @@ function SupplierForm({
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {
-        handleCancelEdit();
+        setEditingSupplier(null);
+        reset({
+          name: "",
+          phone: "",
+          email: "",
+          address: ""
+        });
         setIsLoadUpdate(null);
         fetchSuppliers();
       }
@@ -145,7 +157,12 @@ function SupplierForm({
 
   function handleCancelEdit() {
     setEditingSupplier(null);
-    reset();
+    reset({
+      name: "",
+      phone: "",
+      email: "",
+      address: "",
+    });
   }
 
   return (
@@ -310,7 +327,7 @@ function SupplierForm({
             <CardAction className="w-full flex gap-2 mt-5">
               {isLoadAdd ||
               (editingSupplier && isLoadUpdate === editingSupplier.id) ? (
-                <ButtonLoading />
+                <ButtonLoading className="flex-1" />
               ) : (
                 <>
                   {editingSupplier && (

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/client";
 import { appError } from "../utils/error";
 
-export async function readAllOrders(
+export async function readOrdersAll(
   req: Request,
   res: Response,
   next: NextFunction

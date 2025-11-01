@@ -156,7 +156,18 @@ function ProductForm({
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {
-        handleCancelEdit();
+        setEditingProduct(null);
+        reset({
+          name: "",
+          supplierId: "",
+          category: "",
+          description: "",
+          price: 0,
+          stock: 0,
+          reorder: 0,
+          unit: "",
+          warehouse: ""
+        });
         setIsLoadAdd(false);
         fetchProducts();
       }
@@ -188,7 +199,18 @@ function ProductForm({
       } catch (err: unknown) {
         toast.error(extractAxiosError(err));
       } finally {
-        handleCancelEdit();
+        setEditingProduct(null);
+        reset({
+          name: "",
+          supplierId: "",
+          category: "",
+          description: "",
+          price: 0,
+          stock: 0,
+          reorder: 0,
+          unit: "",
+          warehouse: ""
+        });
         setIsLoadUpdate(null);
         fetchProducts();
       }
@@ -233,7 +255,17 @@ function ProductForm({
 
   function handleCancelEdit() {
     setEditingProduct(null);
-    reset();
+    reset({
+      name: "",
+      supplierId: "",
+      category: "",
+      description: "",
+      price: 0,
+      stock: 0,
+      reorder: 0,
+      unit: "",
+      warehouse: "",
+    });
   }
 
   return (
@@ -541,20 +573,20 @@ function ProductForm({
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex flex-col gap-2 w-full">
                 <Label
-                  htmlFor="price"
+                  htmlFor="reorder"
                   className="text-cyan-700 dark:text-zinc-300"
                 >
-                  Price
+                  Reorder Level
                 </Label>
                 <Input
                   className="rounded-lg"
                   type="number"
-                  id="price"
-                  {...register("price", { valueAsNumber: true })}
+                  id="reorder"
+                  {...register("reorder", { valueAsNumber: true })}
                 />
-                {errors.price && (
+                {errors.reorder && (
                   <p className="text-destructive">
-                    {errors.price.message as string}
+                    {errors.reorder.message as string}
                   </p>
                 )}
               </div>
@@ -581,20 +613,20 @@ function ProductForm({
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex flex-col gap-2 w-full">
                 <Label
-                  htmlFor="reorder"
+                  htmlFor="price"
                   className="text-cyan-700 dark:text-zinc-300"
                 >
-                  Reorder Level
+                  Price
                 </Label>
                 <Input
                   className="rounded-lg"
                   type="number"
-                  id="reorder"
-                  {...register("reorder", { valueAsNumber: true })}
+                  id="price"
+                  {...register("price", { valueAsNumber: true })}
                 />
-                {errors.reorder && (
+                {errors.price && (
                   <p className="text-destructive">
-                    {errors.reorder.message as string}
+                    {errors.price.message as string}
                   </p>
                 )}
               </div>

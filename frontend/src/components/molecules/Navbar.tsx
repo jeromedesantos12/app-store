@@ -5,7 +5,6 @@ import { api, extractAxiosError } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "@/components/molecules/Logo";
 import ButtonLoading from "@/components/molecules/ButtonLoading";
-import ButtonError from "@/components/molecules/ButtonError";
 import ThemeToggle from "@/components/molecules/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +13,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import toast from "react-hot-toast";
 
 function Navbar({
   nav,
@@ -26,18 +26,17 @@ function Navbar({
 }) {
   const { token, setToken } = useAuth();
   const [isLoadLog, setIsLoadLog] = useState(false);
-  const [isErrLog, setIsErrLog] = useState<string | null>(null);
 
   async function logout() {
     setIsLoadLog(true);
-    setIsErrLog(null);
     setTimeout(async () => {
       try {
         await api.post("/logout");
-        setToken(null);
+        toast.success("Logout successful!");
       } catch (err) {
-        setIsErrLog(extractAxiosError(err));
+        toast.error(extractAxiosError(err));
       } finally {
+        setToken(null);
         setIsLoadLog(false);
       }
     }, 500);
@@ -106,8 +105,6 @@ function Navbar({
             )}
             {isLoadLog ? (
               <ButtonLoading className="rounded-full" />
-            ) : isErrLog ? (
-              <ButtonError />
             ) : token?.role ? (
               <Button
                 variant="destructive"

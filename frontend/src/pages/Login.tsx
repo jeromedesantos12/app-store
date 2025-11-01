@@ -31,11 +31,19 @@ const loginSchema = z.object({
 });
 
 function Login({
+  fetchProductsAll,
+  fetchSuppliersAll,
+  fetchSuppliers,
   fetchProducts,
   fetchFilterProducts,
   fetchCarts,
   fetchOrders,
+  fetchOrdersAll,
 }: {
+  fetchProductsAll: () => Promise<void>;
+  fetchSuppliersAll: () => Promise<void>;
+  fetchOrdersAll: () => Promise<void>;
+  fetchSuppliers: () => Promise<void>;
   fetchProducts: () => Promise<void>;
   fetchFilterProducts: () => Promise<void>;
   fetchCarts: () => Promise<void>;
@@ -70,6 +78,10 @@ function Login({
       } finally {
         reset();
         setIsLoadLog(false);
+        fetchProductsAll();
+        fetchOrdersAll();
+        fetchSuppliersAll();
+        fetchSuppliers();
         fetchProducts();
         fetchFilterProducts();
         fetchCarts();
