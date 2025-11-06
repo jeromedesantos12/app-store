@@ -30,6 +30,15 @@ export async function loginUser(
       username: user.username,
       role: user.role,
     });
+    const sanitizedUser = {
+      id: user.id,
+      profile: user.profile,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
     res
       .cookie("token", token, {
         httpOnly: true,
@@ -42,6 +51,7 @@ export async function loginUser(
       .json({
         status: "Success",
         message: "Login success!",
+        data: sanitizedUser,
       });
   } catch (err) {
     next(err);
@@ -265,11 +275,21 @@ export async function createUser(
         password: hashedPassword,
       },
     });
+    const sanitizedUser = {
+      id: user.id,
+      profile: user.profile,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
     const savePath = resolve("src", "uploads", "user", fileName);
     writeFileSync(savePath, fileBuffer);
     res.status(201).json({
       status: "Success",
       message: `Create user ${user.name} success!`,
+      data: sanitizedUser,
     });
   } catch (err) {
     next(err);

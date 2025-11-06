@@ -74,8 +74,8 @@ function Home() {
             <Star className="text-yellow-400 w-10 h-10" />
             <h3 className="font-bold text-lg">Premium Quality</h3>
             <p className="text-muted-foreground">
-              All our products are made from the best selected materials that are durable
-              and comfortable.
+              All our products are made from the best selected materials that
+              are durable and comfortable.
             </p>
           </div>
           <div className="flex flex-col items-center gap-3">
