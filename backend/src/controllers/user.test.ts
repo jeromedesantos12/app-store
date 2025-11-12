@@ -5,7 +5,6 @@ import { comparePassword } from "../utils/bcrypt";
 import { signToken } from "../utils/jwt";
 import { appError } from "../utils/error";
 
-// Mock dependencies
 jest.mock("../connections/client", () => ({
   prisma: {
     user: {
