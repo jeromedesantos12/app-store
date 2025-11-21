@@ -11,7 +11,10 @@
     "generate": "bunx prisma generate --no-engine",
     "migrate": "bunx prisma migrate dev --name init",
     "reset": "bunx prisma migrate reset --force",
-    "psql": "psql -U jeremy -d dumb"
+    "psql": "psql -U jeremy -d dumb",
+    "build": "tsc",
+    "d-build": "docker build -t jeromedesantos/jeremy-store-be:latest .",
+    "d-push": "docker push jeromedesantos/jeremy-store-be:latest"
   },
   "dependencies": {
     "@prisma/client": "^6.18.0",
