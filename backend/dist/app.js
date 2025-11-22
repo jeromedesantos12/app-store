@@ -19,7 +19,7 @@ const error_2 = __importDefault(require("./routes/error"));
 (0, dotenv_1.config)();
 const app = (0, express_1.default)();
 const url = process.env.BASE_URL;
-const PORT = new URL(url).port;
+const PORT = process.env.PORT;
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
