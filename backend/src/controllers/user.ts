@@ -44,7 +44,7 @@ export async function loginUser(
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: "strict",
+        sameSite: "none",
         path: "/",
       })
       .status(200)
@@ -64,7 +64,7 @@ export function logoutUser(req: Request, res: Response, next: NextFunction) {
       .clearCookie("token", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "none",
         path: "/",
       })
       .status(200)
