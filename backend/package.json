@@ -7,12 +7,12 @@
     "test": "npx jest",
     "dev": "ts-node-dev --loader ts-node/esm src/app.ts",
     "seed": "ts-node src/connections/seed.ts",
+    "build": "tsc",
     "studio": "bunx prisma studio",
     "generate": "bunx prisma generate --no-engine",
     "migrate": "bunx prisma migrate dev --name init",
     "reset": "bunx prisma migrate reset --force",
     "psql": "psql -U jeremy -d dumb",
-    "build": "tsc",
     "d-build": "docker build -t jeromedesantos/jeremy-store-be:latest .",
     "d-push": "docker push jeromedesantos/jeremy-store-be:latest"
   },
