@@ -19,12 +19,11 @@ exports.createUser = createUser;
 exports.updateUser = updateUser;
 exports.restoreUser = restoreUser;
 exports.deleteUser = deleteUser;
-const fs_1 = require("fs");
-const path_1 = require("path");
 const client_1 = require("../connections/client");
 const error_1 = require("../utils/error");
 const jwt_1 = require("../utils/jwt");
 const bcrypt_1 = require("../utils/bcrypt");
+const blob_1 = require("../utils/blob");
 function loginUser(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -250,6 +249,9 @@ function createUser(req, res, next) {
             if (existingUser && existingUser.email === email) {
                 throw (0, error_1.appError)("Email already exists!", 409);
             }
+            if (fileName && fileBuffer) {
+                yield (0, blob_1.uploadFile)("user", fileName, fileBuffer);
+            }
             const user = yield client_1.prisma.user.create({
                 data: {
                     profile: fileName,
@@ -269,8 +271,6 @@ function createUser(req, res, next) {
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
             };
-            const savePath = (0, path_1.resolve)("src", "uploads", "user", fileName);
-            (0, fs_1.writeFileSync)(savePath, fileBuffer);
             res.status(201).json({
                 status: "Success",
                 message: `Create user ${user.name} success!`,
@@ -288,10 +288,16 @@ function updateUser(req, res, next) {
         try {
             const { id } = req.user;
             const { username, name, email, address, password } = req.body;
+            const hashedPassword = yield (0, bcrypt_1.hashPassword)(password);
             const existingUser = req.model;
             const fileName = (_a = req === null || req === void 0 ? void 0 : req.processedFile) === null || _a === void 0 ? void 0 : _a.fileName;
             const fileBuffer = (_b = req === null || req === void 0 ? void 0 : req.processedFile) === null || _b === void 0 ? void 0 : _b.fileBuffer;
-            const hashedPassword = yield (0, bcrypt_1.hashPassword)(password);
+            if (fileName && fileBuffer) {
+                if (existingUser.profile) {
+                    yield (0, blob_1.deleteFile)("user", existingUser.profile);
+                }
+                yield (0, blob_1.uploadFile)("user", fileName, fileBuffer);
+            }
             const user = yield client_1.prisma.user.update({
                 data: {
                     profile: fileName !== null && fileName !== void 0 ? fileName : existingUser.profile,
@@ -300,26 +306,13 @@ function updateUser(req, res, next) {
                     email: email ? email : existingUser.email,
                     address: address ? address : existingUser.address,
                     password: hashedPassword ? hashedPassword : existingUser.password,
+                    updatedAt: new Date(),
                 },
                 where: {
                     id,
                     deletedAt: null,
                 },
             });
-            if (fileName) {
-                const savePath = (0, path_1.resolve)("src", "uploads", "user", fileName);
-                if (existingUser.profile) {
-                    const filePath = (0, path_1.resolve)("src", "uploads", "user", existingUser.profile);
-                    if (filePath) {
-                        (0, fs_1.unlink)(filePath, (err) => {
-                            if (err) {
-                                throw (0, error_1.appError)("File cannot remove!", 500);
-                            }
-                        });
-                    }
-                }
-                (0, fs_1.writeFileSync)(savePath, fileBuffer);
-            }
             res.status(200).json({
                 status: "200 OK",
                 message: `Update user ${user.name} success!`,
@@ -332,9 +325,16 @@ function updateUser(req, res, next) {
 }
 function restoreUser(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         try {
             const { id } = req.params;
             const existingUser = req.model;
+            if (existingUser.profile) {
+                const fileResponse = yield (0, blob_1.downloadFile)("user", existingUser.profile);
+                const fileBuffer = fileResponse.data;
+                yield (0, blob_1.uploadFile)("user", (_a = existingUser.profile) === null || _a === void 0 ? void 0 : _a.split("temp_")[1], fileBuffer);
+                yield (0, blob_1.deleteFile)("user", existingUser.profile);
+            }
             const user = yield client_1.prisma.user.update({
                 data: {
                     profile: existingUser.profile.split("temp_")[1],
@@ -345,11 +345,6 @@ function restoreUser(req, res, next) {
                     deletedAt: { not: null },
                 },
             });
-            if (user && user.profile) {
-                const oldPath = (0, path_1.resolve)("src", "uploads", "user", "temp_" + user.profile);
-                const newPath = (0, path_1.resolve)("src", "uploads", "user", user.profile);
-                (0, fs_1.renameSync)(oldPath, newPath);
-            }
             res.status(200).json({
                 status: "Success",
                 message: `Restore user ${user.name} success!`,
@@ -365,6 +360,16 @@ function deleteUser(req, res, next) {
         try {
             const { id } = req.params;
             const existingUser = req.model;
+            if (existingUser.profile) {
+                yield (0, blob_1.deleteFile)("user", "temp_" + existingUser.profile);
+            }
+            if (existingUser.profile.startsWith("temp_")) {
+                return res.status(200).json({
+                    status: "Success",
+                    message: "User already deleted.",
+                    data: existingUser,
+                });
+            }
             const user = yield client_1.prisma.user.update({
                 data: {
                     profile: "temp_" + existingUser.profile,
@@ -375,11 +380,6 @@ function deleteUser(req, res, next) {
                     deletedAt: null,
                 },
             });
-            if (user && user.profile) {
-                const oldPath = (0, path_1.resolve)("src", "uploads", "user", user.profile);
-                const newPath = (0, path_1.resolve)("src", "uploads", "user", "temp_" + user.profile);
-                (0, fs_1.renameSync)(oldPath, newPath);
-            }
             res.status(200).json({
                 status: "Success",
                 message: `Delete user ${user.name} success!`,

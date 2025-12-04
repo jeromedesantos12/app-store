@@ -16,10 +16,8 @@ exports.createProduct = createProduct;
 exports.updateProduct = updateProduct;
 exports.restoreProduct = restoreProduct;
 exports.deleteProduct = deleteProduct;
-const path_1 = require("path");
-const fs_1 = require("fs");
 const client_1 = require("../connections/client");
-const error_1 = require("../utils/error");
+const blob_1 = require("../utils/blob");
 function readProducts(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -159,6 +157,9 @@ function createProduct(req, res, next) {
             const { supplierId, name, category, description, price, stock, reorder, unit, warehouse, } = req.body;
             const fileName = (_a = req === null || req === void 0 ? void 0 : req.processedFile) === null || _a === void 0 ? void 0 : _a.fileName;
             const fileBuffer = (_b = req === null || req === void 0 ? void 0 : req.processedFile) === null || _b === void 0 ? void 0 : _b.fileBuffer;
+            if (fileName && fileBuffer) {
+                yield (0, blob_1.uploadFile)("product", fileName, fileBuffer);
+            }
             const product = yield client_1.prisma.product.create({
                 data: {
                     supplierId,
@@ -173,8 +174,6 @@ function createProduct(req, res, next) {
                     warehouse,
                 },
             });
-            const savePath = (0, path_1.resolve)("src", "uploads", "product", fileName);
-            (0, fs_1.writeFileSync)(savePath, fileBuffer);
             res.status(201).json({
                 status: "Success",
                 message: `Create product ${product.name} success!`,
@@ -195,6 +194,12 @@ function updateProduct(req, res, next) {
             const existingProduct = req.model;
             const fileName = (_a = req === null || req === void 0 ? void 0 : req.processedFile) === null || _a === void 0 ? void 0 : _a.fileName;
             const fileBuffer = (_b = req === null || req === void 0 ? void 0 : req.processedFile) === null || _b === void 0 ? void 0 : _b.fileBuffer;
+            if (fileName && fileBuffer) {
+                if (existingProduct.image) {
+                    yield (0, blob_1.deleteFile)("user", existingProduct.image);
+                }
+                yield (0, blob_1.uploadFile)("user", fileName, fileBuffer);
+            }
             const product = yield client_1.prisma.product.update({
                 data: {
                     supplierId: supplierId ? supplierId : existingProduct.supplierId,
@@ -211,18 +216,6 @@ function updateProduct(req, res, next) {
                     deletedAt: null,
                 },
             });
-            if (fileName) {
-                const savePath = (0, path_1.resolve)("src", "uploads", "product", fileName);
-                const filePath = (0, path_1.resolve)("src", "uploads", "product", existingProduct.image);
-                if (filePath) {
-                    (0, fs_1.unlink)(filePath, (err) => {
-                        if (err) {
-                            throw (0, error_1.appError)("File cannot remove!", 500);
-                        }
-                    });
-                }
-                (0, fs_1.writeFileSync)(savePath, fileBuffer);
-            }
             res.status(200).json({
                 status: "Success",
                 message: `Update product ${product.name} success!`,
@@ -236,9 +229,16 @@ function updateProduct(req, res, next) {
 }
 function restoreProduct(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         try {
             const { id } = req.params;
             const existingProduct = req.model;
+            if (existingProduct.image) {
+                const fileResponse = yield (0, blob_1.downloadFile)("product", existingProduct.image);
+                const fileBuffer = fileResponse.data;
+                yield (0, blob_1.uploadFile)("product", (_a = existingProduct.image) === null || _a === void 0 ? void 0 : _a.split("temp_")[1], fileBuffer);
+                yield (0, blob_1.deleteFile)("product", existingProduct.image);
+            }
             const product = yield client_1.prisma.product.update({
                 data: {
                     image: existingProduct.image.split("temp_")[1],
@@ -249,11 +249,6 @@ function restoreProduct(req, res, next) {
                     deletedAt: { not: null },
                 },
             });
-            if (product && product.image) {
-                const oldPath = (0, path_1.resolve)("src", "uploads", "product", existingProduct.image);
-                const newPath = (0, path_1.resolve)("src", "uploads", "product", product.image);
-                (0, fs_1.renameSync)(oldPath, newPath);
-            }
             res.status(200).json({
                 status: "Success",
                 message: `Restore product ${product.name} success!`,
@@ -270,6 +265,14 @@ function deleteProduct(req, res, next) {
         try {
             const { id } = req.params;
             const existingProduct = req.model;
+            if (existingProduct.image) {
+                if (existingProduct.image) {
+                    const fileResponse = yield (0, blob_1.downloadFile)("product", existingProduct.image);
+                    const fileBuffer = fileResponse.data;
+                    yield (0, blob_1.uploadFile)("product", "temp_" + existingProduct.image, fileBuffer);
+                    yield (0, blob_1.deleteFile)("product", existingProduct.image);
+                }
+            }
             if (existingProduct.image.startsWith("temp_")) {
                 return res.status(200).json({
                     status: "Success",
@@ -287,11 +290,6 @@ function deleteProduct(req, res, next) {
                     deletedAt: null,
                 },
             });
-            if (product && product.image) {
-                const oldPath = (0, path_1.resolve)("src", "uploads", "product", existingProduct.image);
-                const newPath = (0, path_1.resolve)("src", "uploads", "product", product.image);
-                (0, fs_1.renameSync)(oldPath, newPath);
-            }
             res.status(200).json({
                 status: "Success",
                 message: `Delete product ${product.name} success!`,
