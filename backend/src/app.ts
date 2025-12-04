@@ -22,9 +22,9 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(corsMiddleware);
-app.use("/api/v1/uploads", express.static(path.join(__dirname, "uploads")));
-
+// app.use("/api/v1/uploads", express.static(path.join(__dirname, "uploads")));
 // app.use(limiter);
+
 app.use("/api/v1", user);
 app.use("/api/v1", supplier);
 app.use("/api/v1", product);
