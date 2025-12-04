@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { writeFileSync, renameSync, unlink } from "fs";
-import { resolve } from "path";
 import { prisma } from "../connections/client";
 import { appError } from "../utils/error";
 import { signToken } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
+import { deleteFile, downloadFile, uploadFile } from "../utils/blob";
 
 export async function loginUser(
   req: Request,
@@ -44,7 +43,7 @@ export async function loginUser(
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         path: "/",
       })
       .status(200)
@@ -265,6 +264,9 @@ export async function createUser(
     if (existingUser && existingUser.email === email) {
       throw appError("Email already exists!", 409);
     }
+    if (fileName && fileBuffer) {
+      await uploadFile("user", fileName, fileBuffer);
+    }
     const user = await prisma.user.create({
       data: {
         profile: fileName,
@@ -284,8 +286,6 @@ export async function createUser(
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
-    const savePath = resolve("src", "uploads", "user", fileName);
-    writeFileSync(savePath, fileBuffer);
     res.status(201).json({
       status: "Success",
       message: `Create user ${user.name} success!`,
@@ -304,10 +304,16 @@ export async function updateUser(
   try {
     const { id } = (req as any).user;
     const { username, name, email, address, password } = req.body;
+    const hashedPassword = await hashPassword(password);
     const existingUser = (req as any).model;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
-    const hashedPassword = await hashPassword(password);
+    if (fileName && fileBuffer) {
+      if (existingUser.profile) {
+        await deleteFile("user", existingUser.profile);
+      }
+      await uploadFile("user", fileName, fileBuffer);
+    }
     const user = await prisma.user.update({
       data: {
         profile: fileName ?? existingUser.profile,
@@ -316,31 +322,13 @@ export async function updateUser(
         email: email ? email : existingUser.email,
         address: address ? address : existingUser.address,
         password: hashedPassword ? hashedPassword : existingUser.password,
+        updatedAt: new Date(),
       },
       where: {
         id,
         deletedAt: null,
       },
     });
-    if (fileName) {
-      const savePath = resolve("src", "uploads", "user", fileName);
-      if (existingUser.profile) {
-        const filePath = resolve(
-          "src",
-          "uploads",
-          "user",
-          existingUser.profile
-        );
-        if (filePath) {
-          unlink(filePath, (err) => {
-            if (err) {
-              throw appError("File cannot remove!", 500);
-            }
-          });
-        }
-      }
-      writeFileSync(savePath, fileBuffer);
-    }
     res.status(200).json({
       status: "200 OK",
       message: `Update user ${user.name} success!`,
@@ -358,6 +346,16 @@ export async function restoreUser(
   try {
     const { id } = req.params;
     const existingUser = (req as any).model;
+    if (existingUser.profile) {
+      const fileResponse = await downloadFile("user", existingUser.profile);
+      const fileBuffer = fileResponse.data;
+      await uploadFile(
+        "user",
+        existingUser.profile?.split("temp_")[1],
+        fileBuffer
+      );
+      await deleteFile("user", existingUser.profile);
+    }
     const user = await prisma.user.update({
       data: {
         profile: existingUser.profile.split("temp_")[1],
@@ -368,11 +366,7 @@ export async function restoreUser(
         deletedAt: { not: null },
       },
     });
-    if (user && user.profile) {
-      const oldPath = resolve("src", "uploads", "user", "temp_" + user.profile);
-      const newPath = resolve("src", "uploads", "user", user.profile);
-      renameSync(oldPath, newPath);
-    }
+
     res.status(200).json({
       status: "Success",
       message: `Restore user ${user.name} success!`,
@@ -390,6 +384,16 @@ export async function deleteUser(
   try {
     const { id } = req.params;
     const existingUser = (req as any).model;
+    if (existingUser.profile) {
+      await deleteFile("user", "temp_" + existingUser.profile);
+    }
+    if (existingUser.profile.startsWith("temp_")) {
+      return res.status(200).json({
+        status: "Success",
+        message: "User already deleted.",
+        data: existingUser,
+      });
+    }
     const user = await prisma.user.update({
       data: {
         profile: "temp_" + existingUser.profile,
@@ -400,11 +404,6 @@ export async function deleteUser(
         deletedAt: null,
       },
     });
-    if (user && user.profile) {
-      const oldPath = resolve("src", "uploads", "user", user.profile);
-      const newPath = resolve("src", "uploads", "user", "temp_" + user.profile);
-      renameSync(oldPath, newPath);
-    }
     res.status(200).json({
       status: "Success",
       message: `Delete user ${user.name} success!`,

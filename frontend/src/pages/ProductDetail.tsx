@@ -31,8 +31,8 @@ function ProductDetail({
   );
   const [qty, setQty] = useState(0);
   const [isLoadAdd, setIsLoadAdd] = useState<string | null>(null);
-  const baseURL: string = import.meta.env.VITE_BASE_URL;
-  const imageUrl = `${baseURL}/uploads/product/${product?.image}`;
+  const blobURL: string = import.meta.env.VITE_BLOB_URL;
+  const imageUrl = `${blobURL}/product/${product?.image}`;
 
   function handleAdd(id: string) {
     setIsLoadAdd(id);

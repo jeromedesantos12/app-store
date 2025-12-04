@@ -55,8 +55,8 @@ function ProductList({
           <Empty modelName={"product"} />
         ) : (
           products.map((product: ProductType) => {
-            const baseURL: string = import.meta.env.VITE_BASE_URL;
-            const imageUrl = `${baseURL}/uploads/product/${product.image}`;
+            const blobURL: string = import.meta.env.VITE_BLOB_URL;
+            const imageUrl = `${blobURL}/product/${product.image}`;
             return (
               <Card
                 className="w-60 hover:bg-accent transition duration-300"

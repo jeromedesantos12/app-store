@@ -101,8 +101,8 @@ function Cart({
             (product) => product.id === cart.productId
           );
           const availableStock = (product?.stock || 0) + cart.qty;
-          const baseURL: string = import.meta.env.VITE_BASE_URL;
-          const imageUrl = `${baseURL}/uploads/product/${cart.product.image}`;
+          const blobURL: string = import.meta.env.VITE_BLOB_URL;
+          const imageUrl = `${blobURL}/product/${cart.product.image}`;
           return (
             <div
               className="flex flex-wrap md:flex-nowrap gap-5 items-center hover:bg-accent dark:bg-zinc-900 dark:hover:bg-zinc-800 transition duration-300 py-5 rounded-2xl border-2 px-5 justify-between"

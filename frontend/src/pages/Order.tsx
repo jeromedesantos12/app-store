@@ -74,10 +74,8 @@ function Order({
           </TableHeader>
           <TableBody>
             {orders.map((order) => {
-              const baseURL: string = import.meta.env.VITE_BASE_URL;
-              const imageUrl = `${baseURL}/uploads/product/${order.product.image}`;
-
-              console.log(order.product.image);
+              const blobURL: string = import.meta.env.VITE_BLOB_URL;
+              const imageUrl = `${blobURL}/product/${order.product.image}`;
               return (
                 <TableRow key={order.id}>
                   <TableCell className="flex items-center gap-4">

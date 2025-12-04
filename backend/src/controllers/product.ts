@@ -3,6 +3,7 @@ import { resolve } from "path";
 import { writeFileSync, renameSync, unlink } from "fs";
 import { prisma } from "../connections/client";
 import { appError } from "../utils/error";
+import { deleteFile, downloadFile, uploadFile } from "../utils/blob";
 
 export async function readProducts(
   req: Request,
@@ -185,6 +186,9 @@ export async function createProduct(
     } = req.body;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
+    if (fileName && fileBuffer) {
+      await uploadFile("product", fileName, fileBuffer);
+    }
     const product = await prisma.product.create({
       data: {
         supplierId,
@@ -199,8 +203,6 @@ export async function createProduct(
         warehouse,
       },
     });
-    const savePath = resolve("src", "uploads", "product", fileName);
-    writeFileSync(savePath, fileBuffer);
     res.status(201).json({
       status: "Success",
       message: `Create product ${product.name} success!`,
@@ -222,6 +224,12 @@ export async function updateProduct(
     const existingProduct = (req as any).model;
     const fileName = (req as any)?.processedFile?.fileName;
     const fileBuffer = (req as any)?.processedFile?.fileBuffer;
+    if (fileName && fileBuffer) {
+      if (existingProduct.image) {
+        await deleteFile("user", existingProduct.image);
+      }
+      await uploadFile("user", fileName, fileBuffer);
+    }
     const product = await prisma.product.update({
       data: {
         supplierId: supplierId ? supplierId : existingProduct.supplierId,
@@ -238,23 +246,7 @@ export async function updateProduct(
         deletedAt: null,
       },
     });
-    if (fileName) {
-      const savePath = resolve("src", "uploads", "product", fileName);
-      const filePath = resolve(
-        "src",
-        "uploads",
-        "product",
-        existingProduct.image
-      );
-      if (filePath) {
-        unlink(filePath, (err) => {
-          if (err) {
-            throw appError("File cannot remove!", 500);
-          }
-        });
-      }
-      writeFileSync(savePath, fileBuffer);
-    }
+
     res.status(200).json({
       status: "Success",
       message: `Update product ${product.name} success!`,
@@ -273,6 +265,16 @@ export async function restoreProduct(
   try {
     const { id } = req.params;
     const existingProduct = (req as any).model;
+    if (existingProduct.image) {
+      const fileResponse = await downloadFile("product", existingProduct.image);
+      const fileBuffer = fileResponse.data;
+      await uploadFile(
+        "product",
+        existingProduct.image?.split("temp_")[1],
+        fileBuffer
+      );
+      await deleteFile("product", existingProduct.image);
+    }
     const product = await prisma.product.update({
       data: {
         image: existingProduct.image.split("temp_")[1],
@@ -283,16 +285,6 @@ export async function restoreProduct(
         deletedAt: { not: null },
       },
     });
-    if (product && product.image) {
-      const oldPath = resolve(
-        "src",
-        "uploads",
-        "product",
-        existingProduct.image
-      );
-      const newPath = resolve("src", "uploads", "product", product.image);
-      renameSync(oldPath, newPath);
-    }
     res.status(200).json({
       status: "Success",
       message: `Restore product ${product.name} success!`,
@@ -311,6 +303,21 @@ export async function deleteProduct(
   try {
     const { id } = req.params;
     const existingProduct = (req as any).model;
+    if (existingProduct.image) {
+      if (existingProduct.image) {
+        const fileResponse = await downloadFile(
+          "product",
+          existingProduct.image
+        );
+        const fileBuffer = fileResponse.data;
+        await uploadFile(
+          "product",
+          "temp_" + existingProduct.image,
+          fileBuffer
+        );
+        await deleteFile("product", existingProduct.image);
+      }
+    }
     if (existingProduct.image.startsWith("temp_")) {
       return res.status(200).json({
         status: "Success",
@@ -328,16 +335,6 @@ export async function deleteProduct(
         deletedAt: null,
       },
     });
-    if (product && product.image) {
-      const oldPath = resolve(
-        "src",
-        "uploads",
-        "product",
-        existingProduct.image
-      );
-      const newPath = resolve("src", "uploads", "product", product.image);
-      renameSync(oldPath, newPath);
-    }
     res.status(200).json({
       status: "Success",
       message: `Delete product ${product.name} success!`,

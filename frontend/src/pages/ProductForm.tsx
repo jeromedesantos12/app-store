@@ -166,7 +166,7 @@ function ProductForm({
           stock: 0,
           reorder: 0,
           unit: "",
-          warehouse: ""
+          warehouse: "",
         });
         setIsLoadAdd(false);
         fetchProducts();
@@ -209,7 +209,7 @@ function ProductForm({
           stock: 0,
           reorder: 0,
           unit: "",
-          warehouse: ""
+          warehouse: "",
         });
         setIsLoadUpdate(null);
         fetchProducts();
@@ -286,9 +286,8 @@ function ProductForm({
               <Error error={isErr} />
             ) : products.length > 0 ? (
               products.map((product) => {
-                const baseURL: string = import.meta.env.VITE_BASE_URL;
-                const imageUrl = `${baseURL}/uploads/product/${product.image}`;
-                console.log(imageUrl);
+                const blobURL: string = import.meta.env.VITE_BLOB_URL;
+                const imageUrl = `${blobURL}/product/${product.image}`;
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
